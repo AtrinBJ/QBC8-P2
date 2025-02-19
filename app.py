@@ -1,5 +1,5 @@
 from flask import Flask, redirect, url_for
-from flask_login import LoginManager
+from flask_login import LoginManager,UserMixin,login_user
 from dotenv import load_dotenv
 import os
 
@@ -9,6 +9,17 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 
 login_manager = LoginManager()
 login_manager.init_app(app)
+
+
+class User(UserMixin, db.Model):
+    pass
+
+@login_manager.user_loader
+def load_user():
+    pass
+
+
+
 
 
 
@@ -25,6 +36,7 @@ def signup():
 
 @app.route('/accounts/login') 
 def login():
+    login_user()
     return "Login Page"  
 
 if __name__ == "__main__":
