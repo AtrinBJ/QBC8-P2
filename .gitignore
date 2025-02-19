@@ -1,0 +1,8 @@
+# .gitignore 
+.env           # Exclude the .env file 
+venv/          # Exclude virtual environment 
+.venv*/ 
+venv/ 
+VENV/ 
+*.pyc          # Exclude Python bytecode 
+__pycache__/   # Exclude cache folders 
