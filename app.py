@@ -27,6 +27,7 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 login_manager.login_message = 'You MUST Log in first!'
+login_manager.login_message_category = 'error'
 
 
 class User(db.Model, UserMixin):
@@ -90,7 +91,7 @@ class LoginForm(FlaskForm):
 
 @app.route('/')
 def index():
-    return render_template('signup.html') 
+    return 'hello'
 
 
 @app.route('/accounts')  
@@ -100,14 +101,16 @@ def accounts():
 
 @app.route('/accounts/signup', methods=['GET', 'POST'])
 def signup():
+ if current_user.is_authenticated:
+        return redirect(url_for("index")) 
  form = Signupform()
  if form.validate_on_submit():
     existing_user = User.query.filter_by(username=form.username.data).first()
     existing_email = User.query.filter_by(email=form.email.data).first() 
     if existing_user:
-        flash('Username already exists. Please choose a different one.')
+        flash('Username already exists. Please choose a different one.', 'error')
     elif existing_email:
-        flash('Email already exists. Please use a different email.')
+        flash('Email already exists. Please use a different email.', 'error')
     else:
         new_user = User(username=form.username.data, email=form.email.data)
         new_user.set_password(form.password.data)
@@ -133,10 +136,10 @@ def login():
         user = User.query.filter_by(username=form.username.data).first()
         if user and user.check_password(form.password.data):
             login_user(user)
-            flash('Login successful!')
+            flash('Login successful!', 'success')
             return redirect(url_for('index'))
         else:
-            flash('Login failed. Check your username and/or password.')    
+            flash('Login failed. Check your username and/or password.', 'error')    
     return render_template('login.html', form=form)
 
 @app.route('/accounts/admin')
