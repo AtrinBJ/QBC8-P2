@@ -15,15 +15,26 @@
     color: white;
     font-size: 14px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-    animation: slideIn 0.5s ease-out;
+    animation: slideIn 0.5s ease-out, fadeOut 3s 2s forwards; /* Slide-in and fade-out animations */
 }
 
+/* Slide in animation */
 @keyframes slideIn {
     from {
         transform: translateX(100%);
     }
     to {
         transform: translateX(0);
+    }
+}
+
+/* Fade-out animation */
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
     }
 }
 

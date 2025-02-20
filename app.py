@@ -15,14 +15,12 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 csrf = CSRFProtect(app)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///database/users.db'
-app.config['SQLALCHEMY_BINDS'] = {
-    'questions_db': f'sqlite:///database/questions.db',
-    'quizzes_db': f'sqlite:///database/quizzes.db',
-    'answers_db': f'sqlite:///database/answers.db'
-}
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+DATABASE_PATH = os.path.join(BASE_DIR, 'database', 'main.db')
+app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DATABASE_PATH}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
+
 
 
 login_manager = LoginManager()
@@ -31,17 +29,14 @@ login_manager.login_view = 'login'
 login_manager.login_message = 'You MUST Log in first!'
 
 
-class User(UserMixin, db.Model):
-    id = db.Column(db.Integer, primary_key=True)  # User ID (primary key)
-    username = db.Column(db.String(100), unique=True, nullable=False)  # Unique username
-    email = db.Column(db.String(120), unique=True, nullable=False)  # Unique email
-    password_hash = db.Column(db.String(128), nullable=False)  # Store the hashed password
-    date_created = db.Column(db.DateTime, default=datetime.utcnow)  # The date the user was created
-
-    # Relationship with quizzes taken by the user
-    quizzes_taken = db.relationship('Quiz', backref='user', lazy=True)
-    # Relationship with answers given by the user
-    user_answers = db.relationship('Answer', backref='user', lazy=True)
+class User(db.Model, UserMixin):
+    __tablename__ = 'user'
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password_hash = db.Column(db.String(128))
+    role = db.Column(db.String(20), default="user")  # Role column with default "user"
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def set_password(self, password):
         """Hash and set the user's password."""
@@ -51,6 +46,11 @@ class User(UserMixin, db.Model):
         """Check if the entered password matches the hashed password."""
         return check_password_hash(self.password_hash, password)
 
+    def is_admin(self):
+        """Check if the user has admin privileges."""
+        return self.role == 'admin'
+
+
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -59,7 +59,7 @@ def load_user(user_id):
 
 
 class Signupform(FlaskForm):
-    username = StringField('usename', validators=[DataRequired()])
+    username = StringField('username', validators=[DataRequired()])
     email = StringField('Email', validators=[
         DataRequired(),
         Email(message="Please enter a valid email address"),
@@ -88,12 +88,15 @@ class LoginForm(FlaskForm):
 
 
 
-
+@app.route('/')
+def index():
+    return render_template('signup.html') 
 
 
 @app.route('/accounts')  
+@app.route('/accounts/')
 def accounts():
-    return redirect(url_for("signup"))
+    return render_template('accounts_landing.html')
 
 @app.route('/accounts/signup', methods=['GET', 'POST'])
 def signup():
@@ -112,7 +115,7 @@ def signup():
         db.session.commit() 
         flash('Signup successful. Please log in.')
         return redirect(url_for('login'))  # Redirect to login after signup
-    return render_template('signup.html', form=form)
+ return render_template('signup.html', form=form)
 
 
 
@@ -136,11 +139,25 @@ def login():
             flash('Login failed. Check your username and/or password.')    
     return render_template('login.html', form=form)
 
+@app.route('/accounts/admin')
+@login_required
+def admin():
+    if current_user.is_admin():
+        return render_template('admin.html')  # Use a template
+    else:
+        flash('You do not have permission to access this page.', 'error')
+        return redirect(url_for('index'))
+
+
+
 @app.route('/accounts/logout')
 @login_required  
 def logout():
     logout_user()
     return redirect(url_for("index"))   
 
+
+
+
 if __name__ == "__main__":
-    app.run()
+  app.run(debug=True)
