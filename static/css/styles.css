@@ -1,0 +1,43 @@
+/* Flash message styles */
+.flash-messages {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+}
+
+.flash-message {
+    padding: 15px 20px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    color: white;
+    font-size: 14px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    animation: slideIn 0.5s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+    }
+    to {
+        transform: translateX(0);
+    }
+}
+
+/* Different message types */
+.flash-message.success {
+    background-color: #4CAF50; /* Green */
+}
+
+.flash-message.error {
+    background-color: #F44336; /* Red */
+}
+
+.flash-message.warning {
+    background-color: #FF9800; /* Orange */
+}
+
+.flash-message.info {
+    background-color: #2196F3; /* Blue */
+}

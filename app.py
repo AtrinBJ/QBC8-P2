@@ -1,4 +1,4 @@
-from flask import Flask, redirect, url_for,render_template,request
+from flask import Flask, redirect, url_for,render_template,request,flash,get_flashed_messages
 from flask_login import LoginManager,UserMixin,login_user,logout_user,current_user,login_required
 from dotenv import load_dotenv
 import os
@@ -36,21 +36,22 @@ def accounts():
 def signup():
     return "Signup Page"  
 
-@app.route('/accounts/login', methods = ['Get', 'POST'] ) 
+@app.route('/accounts/login', methods = ['GET', 'POST'] ) 
 def login():
-    if request.method == 'POST':       
-        login_user()
-        return "Login Page"
     if current_user.is_authenticated:
         return redirect(url_for("index")) 
     
+    if request.method == 'POST':       
+        login_user()
+        return "Login Page"
+
     return redirect(url_for("login"))
 
 @app.route('/accounts/logout')
 @login_required  
 def logout():
     logout_user()
-    return redirect(url_for("login"))   
+    return redirect(url_for("index"))   
 
 if __name__ == "__main__":
     app.run()
