@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign up</title>
+    <title>Sign Up</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 <body>
@@ -17,6 +17,7 @@
             {% endif %}
         {% endwith %}
     </div>
+
     <div class="form-container">
         <h2>Sign Up</h2>
         <form method="POST" action="{{ url_for('signup') }}">
@@ -78,9 +79,10 @@
             <div class="form-group">
                 {{ form.submit(class="btn btn-primary") }}
             </div>
-    </form>
+        </form>
 
-    <!-- Main content -->
-    {% block content %}{% endblock %}
+        <!-- Link to login page -->
+        <p>Already have an account? <a href="{{ url_for('login') }}">Log in here</a></p>
+    </div>
 </body>
 </html>
