@@ -1,5 +1,5 @@
-from flask import Flask, redirect, url_for
-from flask_login import LoginManager,UserMixin,login_user,logout_user
+from flask import Flask, redirect, url_for,render_template,request
+from flask_login import LoginManager,UserMixin,login_user,logout_user,current_user,login_required
 from dotenv import load_dotenv
 import os
 
@@ -9,6 +9,8 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 
 login_manager = LoginManager()
 login_manager.init_app(app)
+login_manager.login_view = 'login'
+login_manager.login_message = 'You MUST Log in first!'
 
 
 class User(UserMixin, db.Model):
@@ -34,12 +36,18 @@ def accounts():
 def signup():
     return "Signup Page"  
 
-@app.route('/accounts/login') 
+@app.route('/accounts/login', methods = ['Get', 'POST'] ) 
 def login():
-    login_user()
-    return "Login Page"
+    if request.method == 'POST':       
+        login_user()
+        return "Login Page"
+    if current_user.is_authenticated:
+        return redirect(url_for("index")) 
+    
+    return redirect(url_for("login"))
 
-@app.route('/accounts/logout')  
+@app.route('/accounts/logout')
+@login_required  
 def logout():
     logout_user()
     return redirect(url_for("login"))   
