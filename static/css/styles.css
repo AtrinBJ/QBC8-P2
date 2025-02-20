@@ -15,30 +15,19 @@
     color: white;
     font-size: 14px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-    animation: slideIn 0.5s ease-out, fadeOut 3s 2s forwards; /* Slide-in and fade-out animations */
+    animation: slideIn 0.5s ease-out, fadeOut 3s 2s forwards;
 }
 
-/* Slide in animation */
 @keyframes slideIn {
-    from {
-        transform: translateX(100%);
-    }
-    to {
-        transform: translateX(0);
-    }
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
 }
 
-/* Fade-out animation */
 @keyframes fadeOut {
-    from {
-        opacity: 1;
-    }
-    to {
-        opacity: 0;
-    }
+    from { opacity: 1; }
+    to { opacity: 0; }
 }
 
-/* Different message types */
 .flash-message.success {
     background-color: #4CAF50; /* Green */
 }
@@ -59,7 +48,6 @@
 /* Signup page-specific styles */
 /* =============================== */
 
-/* Signup form container */
 .form-container {
     max-width: 500px;
     margin: 0 auto;
@@ -74,7 +62,6 @@
     margin-bottom: 20px;
 }
 
-/* Form group styles for spacing between fields */
 .form-group {
     margin-bottom: 15px;
 }
@@ -93,14 +80,12 @@
     border-radius: 5px;
 }
 
-/* Error message styles */
 .form-group .error {
     color: red;
     font-size: 12px;
     margin-top: 5px;
 }
 
-/* Success button styles */
 .form-group button {
     width: 100%;
     padding: 10px;

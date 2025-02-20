@@ -60,9 +60,16 @@ def load_user(user_id):
 
 
 class Signupform(FlaskForm):
-    username = StringField('username', validators=[DataRequired()])
+    username = StringField('Username', validators=[
+        DataRequired(message="Username is required"), 
+        Length(min=3, max=20, message="Username must be 3-20 characters long"),  # Length constraint
+        Regexp(
+            r'^[A-Za-z0-9_-]+$',
+            message="Username can only contain letters, numbers, underscores, or hyphens"
+        )
+    ])
     email = StringField('Email', validators=[
-        DataRequired(),
+        DataRequired("Email is required"),
         Email(message="Please enter a valid email address"),
         Regexp(r'[a-zA-Z0-9._%+-]+@[a-zA-Z.-]+\.[a-zA-Z]{2,3}',message="Invalid email address format")
     ])
@@ -91,13 +98,13 @@ class LoginForm(FlaskForm):
 
 @app.route('/')
 def index():
-    return 'hello'
+    return render_template('index.html')
 
 
 @app.route('/accounts')  
 @app.route('/accounts/')
 def accounts():
-    return render_template('accounts_landing.html')
+    return render_template('index.html')
 
 @app.route('/accounts/signup', methods=['GET', 'POST'])
 def signup():
@@ -121,16 +128,10 @@ def signup():
  return render_template('signup.html', form=form)
 
 
-
-
-
-
-
 @app.route('/accounts/login', methods = ['GET', 'POST'] ) 
 def login():
     if current_user.is_authenticated:
         return redirect(url_for("index")) 
-    
     form = LoginForm()
     if form.validate_on_submit():
         user = User.query.filter_by(username=form.username.data).first()
@@ -142,21 +143,27 @@ def login():
             flash('Login failed. Check your username and/or password.', 'error')    
     return render_template('login.html', form=form)
 
-@app.route('/accounts/admin')
+
+
+@app.route('/accounts/admin/dashboard')
 @login_required
 def admin():
     if current_user.is_admin():
-        return render_template('admin.html')  # Use a template
+        return render_template('admin_dashboard.html')
     else:
-        flash('You do not have permission to access this page.', 'error')
+        flash('You do not have permission to access this page.', 'warning')
         return redirect(url_for('index'))
-
+@app.route('/dashboard')
+@login_required
+def user_dashboard():
+    return render_template('user_dashboard.html')
 
 
 @app.route('/accounts/logout')
 @login_required  
 def logout():
     logout_user()
+    flash('You have been successfully logged out', 'success')
     return redirect(url_for("index"))   
 
 
