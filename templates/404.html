@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Page Not Found{% endblock %}    
+{% block link %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/404.css') }}">
+{% endblock %}
+{% block bodyname %}
+<body>
+{% endblock %}
+{% block body %}
+<div class="container">
+    <h1>404</h1>
+    <p>Oops! The page you're looking for doesn't exist.</p>
+    <div class="counter">Redirecting to homepage in <span id="countdown">5</span> seconds</div>
+    <a href="/" class="redirect-link">Go Home Now</a>
+</div>
+
+<script src="{{ url_for('static', filename='js/redirect.js') }}"></script>
+</body>
+</html>
+{% endblock %}

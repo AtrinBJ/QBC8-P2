@@ -1,21 +1,46 @@
-// static/js/redirect.js
+// DOM Elements
+const countdownElement = document.getElementById('countdown');
+const progressBar = document.querySelector('.progress');
+const redirectLink = document.querySelector('.redirect-link');
 
-// Get the element where we will display the countdown
-let countdownElement = document.getElementById("countdown-timer");
+// Configuration
+const COUNTDOWN_DURATION = 5; // Countdown duration in seconds
+const REDIRECT_URL = "/"; // URL to redirect to
 
-// Set the countdown time in seconds (e.g., 5 seconds)
-let countdownTime = 8;
+// Initialize Countdown
+let seconds = COUNTDOWN_DURATION;
 
 // Update the countdown every second
-let countdownInterval = setInterval(function() {
-    countdownElement.innerText = countdownTime;  // Show the countdown
-
-    // Decrease the countdown by 1
-    countdownTime--;
-
-    // If the countdown reaches 0, redirect the user
-    if (countdownTime < 0) {
-        clearInterval(countdownInterval);  // Clear the interval
-        window.location.href = "/accounts/signup";  // Redirect to signup page
+const timer = setInterval(() => {
+    seconds--;
+    
+    // Update the countdown display
+    if (countdownElement) {
+        countdownElement.textContent = seconds;
     }
-}, 1000);  // 1000ms = 1 second
+
+    // Update the progress bar
+    if (progressBar) {
+        const progressPercentage = seconds / COUNTDOWN_DURATION;
+        progressBar.style.transform = `scaleX(${progressPercentage})`;
+    }
+
+    // Redirect when countdown reaches 0
+    if (seconds <= 0) {
+        clearInterval(timer); // Stop the timer
+
+        // Redirect after a short delay
+        setTimeout(() => {
+            window.location.href = REDIRECT_URL;
+        }, 500); // 0.5 second delay for smooth transition
+    }
+}, 1000); // Run every 1000ms (1 second)
+
+// Manual Redirect (if user clicks the link)
+if (redirectLink) {
+    redirectLink.addEventListener('click', (e) => {
+        e.preventDefault(); // Prevent default link behavior
+        clearInterval(timer); // Stop the countdown
+        window.location.href = REDIRECT_URL; // Redirect immediately
+    });
+}
