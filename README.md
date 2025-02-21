@@ -1,2 +1,2 @@
-# QCB8-P2
+# QBC8-P2
 (P2) Quiz System
