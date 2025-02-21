@@ -3,16 +3,29 @@
 
 ((
 Project in a glance
-quiz_project/
-    ├── app.py
-    ├── static/
-    │   └── style.css
-    └── templates/
-        ├── base.html
-        ├── index.html
-        ├── login.html
-        ├── register.html
-        └── quiz.html
+quiz_project/                  # پوشه اصلی پروژه
+│
+├── app.py                     # فایل اصلی برنامه
+├── config.py                  # تنظیمات برنامه
+├── requirements.txt           # لیست پکیج‌های مورد نیاز
+│
+├── static/                    # فایل‌های استاتیک
+│   ├── css/
+│   │   └── style.css         # استایل‌های سفارشی
+│   ├── js/
+│   │   └── script.js         # اسکریپت‌های سفارشی
+│   └── fonts/
+│       └── Vazir.woff2       # فونت فارسی
+│
+└── templates/                 # قالب‌های HTML
+    ├── base.html             # قالب پایه
+    ├── index.html            # صفحه اصلی
+    ├── login.html            # صفحه ورود
+    ├── register.html         # صفحه ثبت‌نام
+    ├── profile.html          # صفحه پروفایل
+    ├── quiz.html             # صفحه کوییز
+    └── admin/                # قالب‌های پنل مدیریت
+        └── questions.html    # مدیریت سوالات
 ))
 
         
