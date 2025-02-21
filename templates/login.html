@@ -1,27 +1,13 @@
-<!-- templates/login.html -->
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - QuizMaster</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-</head>
+{% extends "base.html" %}
+{% block title %}Login - QuizMaster{% endblock %}    
+{% block link %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+{% endblock %} 
+{% block bodyname %}    
 <body class="auth-page">
+{% endblock %}
+{% block body %}
     <main class="auth-container">
-        <!-- Flash messages -->
-        <div class="flash-messages">
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="flash-message {{ category }}">{{ message }}</div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
-        </div>
-
         <div class="auth-card">
             <div class="auth-header">
                 <h1 class="auth-title">Welcome Back</h1>
@@ -68,3 +54,4 @@
     </main>
 </body>
 </html>
+{% endblock %}
