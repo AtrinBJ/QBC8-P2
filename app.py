@@ -6,7 +6,7 @@ from wtforms import StringField,PasswordField,SubmitField
 from wtforms.validators import DataRequired,Email,EqualTo,Length,Regexp
 from flask_wtf.csrf import CSRFProtect
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
 
@@ -35,10 +35,11 @@ class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
-    plaintext_password = db.Column(db.String(200), nullable=True)  # Add a new column to store plaintext password
     password_hash = db.Column(db.String(200))
+    reset_token = db.Column(db.String(200), nullable=True)  # New column for the reset token
+    token_expiration = db.Column(db.DateTime, nullable=True)
     role = db.Column(db.String(20), default="user")  # Role column with default "user"
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now)
 
     def set_password(self, password):
         """Hash and set the user's password."""
@@ -94,6 +95,29 @@ class LoginForm(FlaskForm):
     password = PasswordField('Password', validators=[DataRequired()])
     submit = SubmitField('Log in')
 
+class RequestResetForm(FlaskForm):
+    email = StringField('Email', validators=[DataRequired(), Email()])
+    username = StringField('Username', validators=[DataRequired()])
+    submit = SubmitField('Request Password Reset')
+
+class ResetPasswordForm(FlaskForm):
+    # New Password Field with Validators
+    password = PasswordField('New Password', validators=[
+        DataRequired(),
+        Length(min=8, max=20, message="Password must be at least 8 characters long"),
+        Regexp(r'^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$', 
+               message="Password must contain at least one letter, one number, and one special character")
+    ])
+
+    # Confirm Password Field with Validators
+    confirm_password = PasswordField('Confirm Password', validators=[
+        DataRequired(),
+        Length(max=30, message="Password too long"),
+        EqualTo('password', message='Passwords must match')
+    ])
+
+    submit = SubmitField('Reset Password')
+
 
 
 
@@ -131,7 +155,7 @@ def signup():
         new_user.set_password(form.password.data)
         db.session.add(new_user)
         db.session.commit() 
-        flash('Signup successful. Please log in.')
+        flash('Signup successful. Please log in.', 'success')
         return redirect(url_for('login'))  # Redirect to login after signup
  return render_template('signup.html', form=form)
 
@@ -150,6 +174,53 @@ def login():
         else:
             flash('Login failed. Check your username and/or password.', 'error')    
     return render_template('login.html', form=form)
+
+@app.route('/request_reset', methods=['GET', 'POST'])
+def request_reset():
+    form = RequestResetForm()
+
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=form.email.data, username=form.username.data).first()
+        if user:
+            token = os.urandom(16).hex()
+            expiration = datetime.now() + timedelta(minutes=5) 
+            user.reset_token = token
+            user.token_expiration = expiration
+            db.session.commit()
+            flash('Password reset request received. Use the link below to reset your password.', 'info')
+            return redirect(url_for('reset_password', token=token))
+        flash('The combination of email and username was not found!', 'error')
+        return redirect(url_for('request_reset'))
+    return render_template('request_reset.html', form=form)
+
+
+@app.route('/reset_password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    # Check if user exists with the reset token
+    user = User.query.filter_by(reset_token=token).first()
+
+    if user and user.token_expiration > datetime.utcnow():  # Token is valid
+        form = ResetPasswordForm()
+
+        if form.validate_on_submit():
+            # Hash the new password
+            hashed_password = generate_password_hash(form.password.data)
+
+            # Update the user's password and reset token
+            user.password_hash = hashed_password
+            user.reset_token = None  # Clear the reset token after reset
+            user.token_expiration = None  # Clear the expiration time
+
+            db.session.commit()  # Commit changes to the database
+
+            flash('Your password has been successfully updated!', 'success')
+            return redirect(url_for('login'))  # Redirect to login page after success
+        
+        return render_template('reset_password.html', form=form, token=token)
+
+    else:
+        flash('The reset link is either invalid or has expired.', 'danger')
+        return redirect(url_for('request_reset'))
 
 
 

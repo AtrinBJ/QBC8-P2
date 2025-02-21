@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 
-{% block title %}Login - QuizMaster{% endblock %}
+{% block title %}Request Password Reset - QuizMaster{% endblock %}    
 
 {% block link %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/request.css') }}">
 {% endblock %}
 
-{% block bodyname %}
+{% block bodyname %}    
 <body class="auth-page">
 {% endblock %}
 
@@ -14,11 +14,11 @@
     <main class="auth-container">
         <div class="auth-card">
             <div class="auth-header">
-                <h1 class="auth-title">Welcome Back</h1>
-                <p class="auth-subtitle">Please sign in to continue</p>
+                <h1 class="auth-title">Reset Your Password</h1>
+                <p class="auth-subtitle">Please enter your username and email to reset your password.</p>
             </div>
 
-            <form method="POST" action="{{ url_for('login') }}" class="auth-form">
+            <form method="POST" action="{{ url_for('request_reset') }}" class="auth-form">
                 {{ form.csrf_token }}
 
                 <!-- Username Field -->
@@ -34,13 +34,13 @@
                     {% endif %}
                 </div>
 
-                <!-- Password Field -->
+                <!-- Email Field -->
                 <div class="form-group">
-                    {{ form.password.label(class="form-label") }}
-                    {{ form.password(class="form-input", placeholder="Enter your password") }}
-                    {% if form.password.errors %}
+                    {{ form.email.label(class="form-label") }}
+                    {{ form.email(class="form-input", placeholder="Enter your email") }}
+                    {% if form.email.errors %}
                         <div class="form-error">
-                            {% for error in form.password.errors %}
+                            {% for error in form.email.errors %}
                                 <p>{{ error }}</p>
                             {% endfor %}
                         </div>
@@ -51,13 +51,10 @@
                 {{ form.submit(class="auth-btn") }}
             </form>
 
-            <!-- Forgot Password Link -->
             <div class="auth-footer">
-                <p>Forgot your password? <a href="{{ url_for('request_reset') }}" class="auth-link">Reset it here</a></p>
-                <p>Don't have an account? <a href="{{ url_for('signup') }}" class="auth-link">Create account</a></p>
+                <p>Remember your password? <a href="{{ url_for('login') }}" class="auth-link">Log in here</a></p>
             </div>
         </div>
     </main>
 </body>
-</html>
 {% endblock %}

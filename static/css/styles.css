@@ -44,6 +44,11 @@
     background-color: #2196F3; /* Blue */
 }
 
+/* New danger style */
+.flash-message.danger {
+    background-color: #a10d4d; 
+}
+
 /* =============================== */
 /* Signup page-specific styles */
 /* =============================== */
