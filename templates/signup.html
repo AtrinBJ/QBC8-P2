@@ -1,76 +1,94 @@
 {% extends "base.html" %}
-{% block title %}Sign Up - QuizMaster{% endblock %} 
+
+{% block title %}Sign Up - QuizMaster{% endblock %}
+
 {% block link %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/signup.css') }}">
 {% endblock %}
+
 {% block bodyname %}
-<body>
+<body class="signup-page">
 {% endblock %}
+
 {% block body %}
-    <div class="signup-card">
-        <div class="form-header">
-            <h1>Create Account</h1>
-            <p>Join our learning community</p>
-        </div>
-
-        <form method="POST" action="{{ url_for('signup') }}">
-            {{ form.csrf_token }}
-
-            <div class="form-group">
-                {{ form.username.label }}
-                {{ form.username(placeholder="Enter username") }}
-                {% if form.username.errors %}
-                    <div class="error">
-                        {% for error in form.username.errors %}
-                            <p>{{ error }}</p>
-                        {% endfor %}
-                    </div>
-                {% endif %}
-            </div>
-
-            <div class="form-group">
-                {{ form.email.label }}
-                {{ form.email(placeholder="your.email@example.com") }}
-                {% if form.email.errors %}
-                    <div class="error">
-                        {% for error in form.email.errors %}
-                            <p>{{ error }}</p>
-                        {% endfor %}
-                    </div>
-                {% endif %}
-            </div>
-
-            <div class="form-group">
-                {{ form.password.label }}
-                {{ form.password(placeholder="Create password") }}
-                {% if form.password.errors %}
-                    <div class="error">
-                        {% for error in form.password.errors %}
-                            <p>{{ error }}</p>
-                        {% endfor %}
-                    </div>
-                {% endif %}
-            </div>
-
-            <div class="form-group">
-                {{ form.confirm_password.label }}
-                {{ form.confirm_password(placeholder="Confirm password") }}
-                {% if form.confirm_password.errors %}
-                    <div class="error">
-                        {% for error in form.confirm_password.errors %}
-                            <p>{{ error }}</p>
-                        {% endfor %}
-                    </div>
-                {% endif %}
-            </div>
-
-            {{ form.submit(class="submit-btn") }}
-        </form>
-
-        <div class="login-link">
-            Already have an account? <a href="{{ url_for('login') }}">Log in here</a>
-        </div>
+<div class="signup-card">
+    <div class="form-header">
+        <h1>Create Account</h1>
+        <p>Join our learning community</p>
     </div>
-</body>
-</html>
+
+    <form method="POST" action="{{ url_for('signup') }}">
+        {{ form.csrf_token }}
+
+        <!-- Username Field -->
+        <div class="form-group">
+            {{ form.username.label }}
+            {{ form.username(placeholder="Enter username", id="username", maxlength=20) }}
+            <span id="username-counter" class="char-counter">0/20</span>
+            {% if form.username.errors %}
+                <div class="error">
+                    {% for error in form.username.errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Email Field -->
+        <div class="form-group">
+            {{ form.email.label }}
+            {{ form.email(placeholder="youremail@example.com", id="email", maxlength=80) }}
+            <span id="email-counter" class="char-counter">0/80</span>
+            {% if form.email.errors %}
+                <div class="error">
+                    {% for error in form.email.errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Password Field -->
+        <div class="form-group">
+            {{ form.password.label }}
+            <div class="password-container">
+                {{ form.password(placeholder="Create password", id="password", maxlength=30) }}
+            </div>
+            <span id="password-counter" class="char-counter">0/30</span>
+            {% if form.password.errors %}
+                <div class="error">
+                    {% for error in form.password.errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Confirm Password Field -->
+        <div class="form-group">
+            {{ form.confirm_password.label }}
+            <div class="password-container">
+                {{ form.confirm_password(placeholder="Confirm password", id="confirm_password", maxlength=30) }}
+            </div>
+            <span id="confirm-password-counter" class="char-counter">0/30</span>
+            {% if form.confirm_password.errors %}
+                <div class="error">
+                    {% for error in form.confirm_password.errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" class="submit-btn">Sign Up</button>
+    </form>
+
+    <div class="login-link">
+        Already have an account? <a href="{{ url_for('login') }}">Log in here</a>
+    </div>
+</div>
+
+<!-- JavaScript Files -->
+<script src="{{ url_for('static', filename='js/signup.js') }}"></script>
 {% endblock %}

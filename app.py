@@ -35,7 +35,8 @@ class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
-    password_hash = db.Column(db.String(128))
+    plaintext_password = db.Column(db.String(200), nullable=True)  # Add a new column to store plaintext password
+    password_hash = db.Column(db.String(200))
     role = db.Column(db.String(20), default="user")  # Role column with default "user"
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -70,17 +71,19 @@ class Signupform(FlaskForm):
     ])
     email = StringField('Email', validators=[
         DataRequired("Email is required"),
+        Length(min=3, max=80, message="Email must be 3-80 characters long"),  # Length constraint
         Email(message="Please enter a valid email address"),
-        Regexp(r'[a-zA-Z0-9._%+-]+@[a-zA-Z.-]+\.[a-zA-Z]{2,3}',message="Invalid email address format")
+        Regexp(r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$',message="Please enter a valid email address. Example: yourname@example.com")
     ])
     password = PasswordField('Password', validators=[
         DataRequired(),
-        Length(min=8, message="Password must be at least 8 characters long"),
+        Length(min=8, max=20, message="Password must be at least 8 characters long"),
         Regexp(r'^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$', 
                message="Password must contain at least one letter, one number, and one special character")
     ])    
     confirm_password = PasswordField('Confirm Password', validators=[
         DataRequired(),
+        Length(max=30, message="Password too long"),
         EqualTo('password', message='Passwords must match')
         ])
     submit = SubmitField('Sign Up')  # This is the submit button
@@ -158,9 +161,11 @@ def admin():
     else:
         flash('You do not have permission to access this page.', 'warning')
         return redirect(url_for('index'))
-@app.route('/dashboard')
+@app.route('/accounts/user/dashboard')
 @login_required
 def user_dashboard():
+    if current_user.is_admin():
+        return render_template('admin_dashboard.html')
     return render_template('user_dashboard.html')
 
 

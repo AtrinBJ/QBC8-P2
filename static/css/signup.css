@@ -6,21 +6,22 @@
 }
 
 /* Body Styles */
-body {
+body.signup-page {
     background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
     min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: 'Inter', sans-serif;
-    padding: 1rem;
+    font-family: 'Times New Roman', serif;
+    overflow: hidden; /* Prevent scrolling */
+    padding: 0;
 }
 
 /* Signup Card */
 .signup-card {
     background: white;
     border-radius: 1rem;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
     padding: 2rem;
     max-width: 440px;
     width: 100%;
@@ -48,23 +49,23 @@ body {
 
 /* Form Groups */
 .form-group {
-    margin-bottom: 1.2rem;
+    margin-bottom: 1.5rem; /* Slightly reduced bottom margin */
 }
 
 .form-group label {
     display: block;
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: #444;
-    margin-bottom: 0.4rem;
+    font-size: 0.95rem; /* Slightly smaller font size */
+    font-weight: 500; /* Lighter weight */
+    color: #333; /* Darker color for clarity */
+    margin-bottom: 0.4rem; /* Reduced margin to keep labels close */
 }
 
 .form-group input {
     width: 100%;
-    padding: 0.8rem;
+    padding: 0.8rem; /* Slightly smaller padding for compactness */
     border: 2px solid #e5e7eb;
     border-radius: 0.7rem;
-    font-size: 0.95rem;
+    font-size: 1rem;
     transition: all 0.2s ease;
 }
 
@@ -72,6 +73,15 @@ body {
     border-color: #4F46E5;
     box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
     outline: none;
+}
+
+/* Char Counters */
+.char-counter {
+    font-size: 0.8rem; /* Smaller font size */
+    color: #aaa; /* Lighter color for subtlety */
+    display: block;
+    margin-top: 0.2rem; /* Space between input and counter */
+    text-align: left; /* Align counters with the input fields */
 }
 
 /* Submit Button */
@@ -86,7 +96,7 @@ body {
     font-weight: 600;
     cursor: pointer;
     transition: background 0.2s ease;
-    margin-top: 0.8rem;
+    margin-top: 1rem;
 }
 
 .submit-btn:hover {
@@ -122,12 +132,13 @@ body {
     line-height: 1.4;
 }
 
+/* Prevent Scroll for Body */
+body.signup-page {
+    overflow: hidden; /* Prevent scrolling */
+}
+
 /* Responsive Styles */
 @media (max-width: 480px) {
-    body {
-        padding: 0.5rem;
-    }
-    
     .signup-card {
         padding: 1.5rem;
         border-radius: 0.8rem;
