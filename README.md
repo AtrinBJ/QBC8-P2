@@ -10,6 +10,8 @@ quiz_project/                  # پوشه اصلی پروژه
 ├── requirements.txt           # لیست پکیج‌های مورد نیاز
 │
 ├── static/                    # فایل‌های استاتیک
+│   ├── images
+│   │   └──background
 │   ├── css/
 │   │   └── style.css         # استایل‌های سفارشی
 │   ├── js/
