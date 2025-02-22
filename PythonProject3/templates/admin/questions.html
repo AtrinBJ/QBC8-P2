@@ -1,0 +1,110 @@
+<!-- templates/admin/questions.html -->
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <h2 class="mb-4">مدیریت سوالات</h2>
+
+    <!-- فرم افزودن سوال جدید -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h3 class="card-title">افزودن سوال جدید</h3>
+            <form method="POST" action="{{ url_for('manage_questions') }}">
+                <div class="mb-3">
+                    <label for="category" class="form-label">دسته‌بندی</label>
+                    <select class="form-control" id="category" name="category" required>
+                        <option value="عمومی">عمومی</option>
+                        <option value="علوم">علوم</option>
+                        <option value="تاریخ">تاریخ</option>
+                        <option value="ورزشی">ورزشی</option>
+                        <!-- دسته‌بندی‌های دیگر را اضافه کنید -->
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label for="question_text" class="form-label">متن سوال</label>
+                    <textarea class="form-control" id="question_text" name="question_text" rows="3" required></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label for="correct_answer" class="form-label">پاسخ صحیح</label>
+                    <input type="text" class="form-control" id="correct_answer" name="correct_answer" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">گزینه‌های نادرست</label>
+                    <div id="wrong_answers_container">
+                        <input type="text" class="form-control mb-2" name="wrong_answers[]" required>
+                        <input type="text" class="form-control mb-2" name="wrong_answers[]" required>
+                        <input type="text" class="form-control mb-2" name="wrong_answers[]" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary">افزودن سوال</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- دکمه دریافت سوالات از API -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h3 class="card-title">دریافت سوالات از API</h3>
+            <button id="import-questions" class="btn btn-success">دریافت سوالات جدید</button>
+        </div>
+    </div>
+
+    <!-- لیست سوالات موجود -->
+    <div class="card">
+        <div class="card-body">
+            <h3 class="card-title">لیست سوالات</h3>
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>دسته‌بندی</th>
+                            <th>سوال</th>
+                            <th>پاسخ صحیح</th>
+                            <th>عملیات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for question in questions %}
+                        <tr>
+                            <td>{{ question.category }}</td>
+                            <td>{{ question.question_text }}</td>
+                            <td>{{ question.correct_answer }}</td>
+                            <td>
+                                <button class="btn btn-sm btn-danger">حذف</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('import-questions').addEventListener('click', function() {
+    fetch('{{ url_for("import_questions") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('سوالات با موفقیت اضافه شدند');
+            location.reload();
+        } else {
+            alert('خطا: ' + data.error);
+        }
+    })
+    .catch(error => {
+        alert('خطا در ارتباط با سرور');
+        console.error(error);
+    });
+});
+</script>
+{% endblock %}
