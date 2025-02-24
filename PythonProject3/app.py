@@ -1,11 +1,12 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify ,sendfile
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, send_file
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 import requests
 import json
 from datetime import datetime
+import matplotlib
+matplotlib.use('Agg')  # Use a non-GUI backend
 import matplotlib.pyplot as plt
-import os
 
 
 # تنظیمات اولیه فلسک
@@ -260,6 +261,8 @@ def profile():
     user = User.query.get(session['user_id'])
     results = QuizResult.query.filter_by(user_id=session['user_id']).order_by(QuizResult.date.desc()).all()
 
+
+
     return render_template('profile.html', user=user, results=results)
 
 
@@ -276,13 +279,38 @@ def edit():
         user.email = request.form['email']
         db.session.commit()
         flash('پروفایل به روز شد')
-        return render_template('profile.html', user=user, results=results)
+        return redirect("/profile")
     except Exception as e:
         print(e)
         flash(message='خطا در به روز رسانی پروفایل', category='error')
-        return render_template('profile.html', user=user, results=results)
+        return redirect("/profile")
+
+
+@app.route('/plot')
+def plot():
+    # Fetch quiz results from the database, ordered by date
+    results = QuizResult.query.filter_by(user_id=session['user_id']).order_by(QuizResult.date).all()
+
+    # Extract dates and scores
+    dates = [result.date for result in results]
+    scores = [result.score for result in results]
+
+    # Create the plot
+    plt.figure(figsize=(10, 5))  # Set the figure size
+    plt.plot(dates, scores, marker='o', linestyle='-', color='r')
+    plt.title('Quiz Scores Over Dates')
+    plt.xlabel('Date')
+    plt.ylabel('Scores')
+    plt.grid()
+
+    # Save the plot as an image file
+    plot_path = 'static/plot.png'  # Save in a static directory
+    plt.savefig(plot_path)
+    plt.close()  # Close the plot to free memory
+
+    return send_file(plot_path)  # Serve the image file
 
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()  # ایجاد جداول دیتابیس در صورت عدم وجود
-    app.run(debug=True)
+    app.run(debug=True, port=5001)
