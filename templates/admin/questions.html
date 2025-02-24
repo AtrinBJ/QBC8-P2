@@ -1,5 +1,7 @@
-<!-- templates/admin/questions.html -->
 {% extends "base.html" %}
+
+{% block title %}مدیریت سوالات{% endblock %}
+
 {% block content %}
 <div class="container">
     <h2 class="mb-4">مدیریت سوالات</h2>
@@ -16,7 +18,6 @@
                         <option value="علوم">علوم</option>
                         <option value="تاریخ">تاریخ</option>
                         <option value="ورزشی">ورزشی</option>
-                        <!-- دسته‌بندی‌های دیگر را اضافه کنید -->
                     </select>
                 </div>
 
@@ -39,7 +40,10 @@
                     </div>
                 </div>
 
-                <button type="submit" class="btn btn-primary">افزودن سوال</button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i>
+                    افزودن سوال
+                </button>
             </form>
         </div>
     </div>
@@ -48,7 +52,10 @@
     <div class="card mb-4">
         <div class="card-body">
             <h3 class="card-title">دریافت سوالات از API</h3>
-            <button id="import-questions" class="btn btn-success">دریافت سوالات جدید</button>
+            <button id="import-questions" class="btn btn-success">
+                <i class="bi bi-cloud-download"></i>
+                دریافت سوالات جدید
+            </button>
         </div>
     </div>
 
@@ -68,12 +75,15 @@
                     </thead>
                     <tbody>
                         {% for question in questions %}
-                        <tr>
+                        <tr id="question-{{ question.id }}">
                             <td>{{ question.category }}</td>
                             <td>{{ question.question_text }}</td>
                             <td>{{ question.correct_answer }}</td>
                             <td>
-                                <button class="btn btn-sm btn-danger">حذف</button>
+                                <button class="btn btn-sm btn-danger" onclick="deleteQuestion({{ question.id }})">
+                                    <i class="bi bi-trash"></i>
+                                    حذف
+                                </button>
                             </td>
                         </tr>
                         {% endfor %}
@@ -85,6 +95,33 @@
 </div>
 
 <script>
+// حذف سوال
+function deleteQuestion(questionId) {
+    if (confirm('آیا از حذف این سوال اطمینان دارید؟')) {
+        fetch(`/admin/delete_question/${questionId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // حذف سطر مربوط به سوال از جدول
+                document.getElementById(`question-${questionId}`).remove();
+                alert('سوال با موفقیت حذف شد');
+            } else {
+                alert('خطا در حذف سوال: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('خطا در ارتباط با سرور');
+        });
+    }
+}
+
+// دریافت سوالات از API
 document.getElementById('import-questions').addEventListener('click', function() {
     fetch('{{ url_for("import_questions") }}', {
         method: 'POST',
@@ -107,4 +144,22 @@ document.getElementById('import-questions').addEventListener('click', function()
     });
 });
 </script>
+
+<style>
+.card {
+    margin-bottom: 2rem;
+}
+
+.table td {
+    vertical-align: middle;
+}
+
+.btn-danger {
+    transition: all 0.2s ease;
+}
+
+.btn-danger:hover {
+    transform: translateY(-2px);
+}
+</style>
 {% endblock %}

@@ -1,5 +1,5 @@
-from datetime import datetime
-
+import os
+import sys
 from app import app, db, User
 from werkzeug.security import generate_password_hash
 
@@ -16,10 +16,7 @@ def create_admin():
         admin = User(
             username='admin',
             email='admin@example.com',
-            password_hash=generate_password_hash('your-admin-password'),
-            first_name='admin',
-            last_name='adminy',
-            join_datetime=datetime.now()
+            password_hash=generate_password_hash('your-admin-password')
         )
 
         try:

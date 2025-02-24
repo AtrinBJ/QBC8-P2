@@ -1,28 +1,255 @@
-<!-- templates/quiz.html -->
 {% extends "base.html" %}
-{% block content %}
-<div class="quiz-container">
-    <h2 class="text-center mb-4">کوییز {{ category }}</h2>
-    <div id="timer" class="text-center mb-3">زمان باقیمانده: <span id="time">00:00</span></div>
 
-    <form id="quiz-form">
-        {% for question in questions %}
-        <div class="card mb-3 question" data-id="{{ question.id }}">
-            <div class="card-body">
-                <h5 class="card-title">{{ question.question_text }}</h5>
-                <div class="options">
-                    {% for option in question.options %}
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio" name="q{{ question.id }}" value="{{ option }}">
-                        <label class="form-check-label">{{ option }}</label>
+{% block title %}کوییز {{ category }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <!-- هدر کوییز -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>کوییز {{ category }}</h2>
+                <div class="d-flex align-items-center">
+                    <div class="me-4">
+                        <i class="bi bi-clock"></i>
+                        <span id="timer" class="ms-1">10:00</span>
                     </div>
-                    {% endfor %}
+                    <div>
+                        سوال <span id="currentQuestion">1</span> از {{ questions|length }}
+                    </div>
                 </div>
             </div>
-        </div>
-        {% endfor %}
 
-        <button type="submit" class="btn btn-primary w-100">ثبت پاسخ‌ها</button>
-    </form>
+            <!-- نوار پیشرفت -->
+            <div class="progress mb-4" style="height: 10px;">
+                <div id="progressBar" class="progress-bar" role="progressbar" style="width: 0%"></div>
+            </div>
+
+            <!-- فرم سوالات -->
+            <form id="quizForm" data-category="{{ category }}" data-total-questions="{{ questions|length }}">
+                {% for question in questions %}
+                <div id="question-{{ loop.index }}" class="question-card card mb-4" {% if loop.index != 1 %}style="display: none"{% endif %}>
+                    <div class="card-body">
+                        <h5 class="card-title mb-4">{{ question.question }}</h5>
+                        <div class="options">
+                            {% for option in question.options %}
+                            <div class="mb-3">
+                                <input type="radio"
+                                       class="btn-check"
+                                       name="question-{{ question.id }}"
+                                       id="option-{{ question.id }}-{{ loop.index }}"
+                                       value="{{ option }}"
+                                       required>
+                                <label class="btn btn-outline-primary w-100 text-start"
+                                       for="option-{{ question.id }}-{{ loop.index }}">
+                                    {{ option }}
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="card-footer d-flex justify-content-between align-items-center">
+                        {% if not loop.first %}
+                        <button type="button" class="btn btn-secondary nav-btn" data-direction="prev" data-question="{{ loop.index }}">
+                            <i class="bi bi-arrow-left"></i> سوال قبلی
+                        </button>
+                        {% else %}
+                        <div></div>
+                        {% endif %}
+
+                        {% if not loop.last %}
+                        <button type="button" class="btn btn-primary nav-btn" data-direction="next" data-question="{{ loop.index }}">
+                            سوال بعدی <i class="bi bi-arrow-right"></i>
+                        </button>
+                        {% else %}
+                        <button type="button" class="btn btn-success" id="submit-quiz">
+                            پایان کوییز <i class="bi bi-check-lg"></i>
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </form>
+        </div>
+    </div>
 </div>
+
+<!-- بقیه مودال‌ها بدون تغییر -->
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // متغیرهای سراسری
+    const quizForm = document.getElementById('quizForm');
+    const totalQuestions = parseInt(quizForm.dataset.totalQuestions);
+    let currentQuestion = 1;
+    let startTime = Date.now();
+    let timer;
+
+    // اضافه کردن event listener برای دکمه‌های ناوبری
+    document.querySelectorAll('.nav-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const direction = this.dataset.direction;
+            const currentNum = parseInt(this.dataset.question);
+
+            if (direction === 'next') {
+                // بررسی انتخاب گزینه قبل از رفتن به سوال بعد
+                const currentCard = document.getElementById(`question-${currentNum}`);
+                const selectedOption = currentCard.querySelector('input[type="radio"]:checked');
+
+                if (!selectedOption) {
+                    alert('لطفاً یک گزینه را انتخاب کنید');
+                    return;
+                }
+                showQuestion(currentNum + 1);
+            } else {
+                showQuestion(currentNum - 1);
+            }
+        });
+    });
+
+    // اضافه کردن event listener برای دکمه پایان کوییز
+    document.getElementById('submit-quiz').addEventListener('click', confirmSubmit);
+
+    // تابع نمایش سوال
+    function showQuestion(num) {
+        // مخفی کردن سوال فعلی
+        document.getElementById(`question-${currentQuestion}`).style.display = 'none';
+
+        // نمایش سوال جدید
+        document.getElementById(`question-${num}`).style.display = 'block';
+
+        // به‌روزرسانی متغیرها و نمایش
+        currentQuestion = num;
+        document.getElementById('currentQuestion').textContent = num;
+        document.getElementById('progressBar').style.width = `${(num / totalQuestions) * 100}%`;
+    }
+
+    // تابع تأیید پایان کوییز
+    function confirmSubmit() {
+        const lastCard = document.getElementById(`question-${totalQuestions}`);
+        const lastAnswer = lastCard.querySelector('input[type="radio"]:checked');
+
+        if (!lastAnswer) {
+            alert('لطفاً به سوال آخر پاسخ دهید');
+            return;
+        }
+
+        if (confirm('آیا مطمئن هستید که می‌خواهید کوییز را به پایان برسانید؟')) {
+            submitQuiz(false);
+        }
+    }
+
+    // تابع ارسال نتایج کوییز
+    async function submitQuiz(isTimeout = false) {
+        clearInterval(timer);
+
+        const formData = new FormData(quizForm);
+        const answers = {};
+        let answered = 0;
+
+        for (let [key, value] of formData.entries()) {
+            const questionId = key.split('-')[1];
+            answers[questionId] = value;
+            answered++;
+        }
+
+        if (!isTimeout && answered < totalQuestions) {
+            alert(`لطفاً به تمام سوالات پاسخ دهید. ${totalQuestions - answered} سوال بدون پاسخ مانده است.`);
+            return;
+        }
+
+        try {
+            const response = await fetch('/submit_quiz', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    category: quizForm.dataset.category,
+                    answers: answers,
+                    time_taken: Math.floor((Date.now() - startTime) / 1000)
+                })
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                showResult(result.score, answered, isTimeout);
+            } else {
+                alert('خطا در ثبت نتایج: ' + result.error);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('خطا در ارتباط با سرور');
+        }
+    }
+
+    // تابع نمایش نتیجه
+    function showResult(score, answered, isTimeout) {
+        const resultIcon = document.getElementById('resultIcon');
+        const resultMessage = document.getElementById('resultMessage');
+
+        if (score >= 80) {
+            resultIcon.className = 'bi bi-emoji-smile display-1 text-success';
+            resultMessage.className = 'alert alert-success';
+            resultMessage.textContent = 'عالی! عملکرد شما فوق‌العاده بود.';
+        } else if (score >= 60) {
+            resultIcon.className = 'bi bi-emoji-neutral display-1 text-warning';
+            resultMessage.className = 'alert alert-warning';
+            resultMessage.textContent = 'خوب! اما جای پیشرفت دارید.';
+        } else {
+            resultIcon.className = 'bi bi-emoji-frown display-1 text-danger';
+            resultMessage.className = 'alert alert-danger';
+            resultMessage.textContent = 'نیاز به تمرین بیشتر دارید.';
+        }
+
+        document.getElementById('scorePercentage').textContent = score;
+        document.getElementById('correctAnswers').textContent = answered;
+
+        if (isTimeout) {
+            resultMessage.textContent = 'زمان کوییز به پایان رسید. ' + resultMessage.textContent;
+        }
+
+        new bootstrap.Modal(document.getElementById('resultModal')).show();
+    }
+
+    // شروع تایمر
+    startTimer(600);
+
+    // تابع تایمر
+    function startTimer(duration) {
+        let timeLeft = duration;
+        timer = setInterval(() => {
+            let minutes = parseInt(timeLeft / 60, 10);
+            let seconds = parseInt(timeLeft % 60, 10);
+
+            minutes = minutes < 10 ? "0" + minutes : minutes;
+            seconds = seconds < 10 ? "0" + seconds : seconds;
+
+            document.getElementById('timer').textContent = minutes + ":" + seconds;
+
+            if (--timeLeft < 0) {
+                clearInterval(timer);
+                submitQuiz(true);
+            }
+        }, 1000);
+    }
+
+    // اضافه کردن کلاس active به گزینه‌های انتخاب شده
+    document.querySelectorAll('.btn-check').forEach(radio => {
+        radio.addEventListener('change', function() {
+            const questionCard = this.closest('.question-card');
+            questionCard.querySelectorAll('.btn-outline-primary').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            if (this.checked) {
+                this.nextElementSibling.classList.add('active');
+            }
+        });
+    });
+});
+</script>
+
+<style>
+/* استایل‌ها بدون تغییر */
+</style>
 {% endblock %}

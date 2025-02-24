@@ -1,21 +1,96 @@
 <!-- templates/index.html -->
 {% extends "base.html" %}
+
+{% block title %}صفحه اصلی - سیستم کوییز{% endblock %}
+
 {% block content %}
 <div class="row">
-    <div class="col-md-8 offset-md-2">
-        <h2 class="text-center mb-4">دسته‌بندی‌های کوییز</h2>
-        <div class="row">
-            <div class="col-md-4 mb-3">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">عمومی</h5>
-                        <p class="card-text">سوالات عمومی در موضوعات مختلف</p>
-                        <a href="{{ url_for('quiz', category='general') }}" class="btn btn-primary">شروع کوییز</a>
+    <!-- پنل مدیریت (فقط برای ادمین) -->
+    {% if user and user.username == 'admin' %}
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">
+                    <i class="bi bi-gear-fill me-2"></i>
+                    پنل مدیریت
+                </h4>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="card bg-primary bg-opacity-10">
+                            <div class="card-body">
+                                <h5 class="card-title">مدیریت سوالات</h5>
+                                <p class="card-text">اضافه، حذف و ویرایش سوالات کوییز</p>
+                                <a href="{{ url_for('manage_questions') }}" class="btn btn-primary">
+                                    <i class="bi bi-pencil-square"></i>
+                                    مدیریت سوالات
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card bg-info bg-opacity-10">
+                            <div class="card-body">
+                                <h5 class="card-title">دریافت سوالات از API</h5>
+                                <p class="card-text">افزودن سوالات جدید از منبع خارجی</p>
+                                <button onclick="importQuestions()" class="btn btn-info text-white">
+                                    <i class="bi bi-cloud-download"></i>
+                                    دریافت سوالات
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-            <!-- سایر دسته‌بندی‌ها -->
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- دسته‌بندی‌های کوییز -->
+    <div class="col-md-8 offset-md-2">
+        <h2 class="text-center mb-4">دسته‌بندی‌های کوییز</h2>
+        <div class="row g-4">
+            {% for category in categories %}
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="bi bi-journal-text display-4 mb-3"></i>
+                        <h5 class="card-title">{{ category }}</h5>
+                        <p class="card-text">سوالات {{ category }}</p>
+                        <a href="{{ url_for('quiz', category=category) }}" class="btn btn-primary w-100">
+                            <i class="bi bi-play-fill"></i>
+                            شروع کوییز
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
         </div>
     </div>
 </div>
+
+{% if user and user.username == 'admin' %}
+<script>
+function importQuestions() {
+    fetch('{{ url_for("import_questions") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('سوالات با موفقیت اضافه شدند');
+            location.reload();
+        } else {
+            alert('خطا: ' + data.error);
+        }
+    })
+    .catch(error => {
+        alert('خطا در ارتباط با سرور');
+        console.error(error);
+    });
+}
+</script>
+{% endif %}
 {% endblock %}

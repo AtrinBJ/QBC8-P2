@@ -1,58 +1,159 @@
-<!-- templates/profile.html -->
 {% extends "base.html" %}
+
+{% block title %}پروفایل - {{ user.username }}{% endblock %}
+
 {% block content %}
-<div class="row">
-    <div class="col-md-8 offset-md-2">
-        <h2 class="text-center mb-4">پروفایل {{ user.username }}</h2>
-
-        <div class="card mb-4">
-            <div class="card-body">
-                <h5 class="card-title">اطلاعات کاربری</h5>
-                <p>نام کاربری: {{ user.username }}</p>
-                <p>ایمیل: {{ user.email }}</p>
-            </div>
-            <div class="container">
-                <h2>Edit Your Profile</h2>
-                <form action="/edit" method="POST">
-                    <input type="text" name="first_name" placeholder="First Name" required value='{{ user.first_name }}'>
-                    <input type="text" name="last_name" placeholder="Last Name" required value='{{ user.last_name }}'>
-                    <input type="password" name="password" placeholder="Password" required value='{{ user.password_hash }}'>
-                    <input type="text" name="email" placeholder="Email" value='{{ user.email }}'>
-                    <input type="hidden" name="id" value='{{ user.id }}'>
-                    <button type="submit">Update</button>
-                </form>
-            </div>
-            <div class="container">
-                <h2>Your Performance Over Time</h2>
-                <img src="{{ url_for('plot') }}" alt="Quiz Scores Over Time" class="img-fluid mt-4">
+<div class="container">
+    <!-- اطلاعات اصلی کاربر -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="bi bi-person-circle display-1 mb-3"></i>
+                    <h4>{{ user.username }}</h4>
+                    <p class="text-muted">{{ user.email }}</p>
+                    <div class="container">
+                        <h2>Edit Your Profile</h2>
+                        <form action="/edit" method="POST">
+<!--                            <input type="text" name="first_name" placeholder="First Name" required value='{{ user.first_name }}'>-->
+<!--                            <input type="text" name="last_name" placeholder="Last Name" required value='{{ user.last_name }}'>-->
+                            <input type="password" name="password" placeholder="Password" required value='{{ user.password_hash }}'>
+                            <input type="text" name="email" placeholder="Email" value='{{ user.email }}'>
+                            <input type="hidden" name="id" value='{{ user.id }}'>
+                            <button type="submit">Update</button>
+                        </form>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-6">
+                            <h5>تعداد کوییزها</h5>
+                            <h3>{{ total_quizzes }}</h3>
+                        </div>
+                        <div class="col-6">
+                            <h5>میانگین نمرات</h5>
+                            <h3>{{ avg_score }}%</h3>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <h3>نتایج کوییزها</h3>
-        <div class="table-responsive">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>دسته‌بندی</th>
-                        <th>امتیاز</th>
-                        <th>زمان</th>
-                        <th>تاریخ</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for result in results %}
-                    <tr>
-                        <td>{{ result.category }}</td>
-                        <td>{{ result.score }}</td>
-                        <td>{{ result.time_taken }} ثانیه</td>
-                        <td>{{ result.date.strftime('%Y-%m-%d %H:%M') }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        <!-- نمودار پیشرفت -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">روند پیشرفت</h5>
+                    <canvas id="progressChart">
+                        <img src="{{ url_for('plot') }}" alt="Quiz Scores Over Time" class="img-fluid mt-4">
+                    </canvas>
+                </div>
+            </div>
         </div>
+    </div>
 
-        <div id="progress-chart" class="mt-4"></div>
+    <!-- آمار دسته‌بندی‌ها -->
+    <div class="row mb-4">
+        {% for category, stats in category_stats.items() %}
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">{{ category }}</h5>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="mb-0">تعداد: {{ stats.count }}</p>
+                            <p class="mb-0">میانگین: {{ "%.1f"|format(stats.avg_score) }}%</p>
+                        </div>
+                        <div class="h2 {{ 'text-success' if stats.avg_score >= 80 else 'text-warning' if stats.avg_score >= 60 else 'text-danger' }}">
+                            <i class="bi {{ 'bi-emoji-smile' if stats.avg_score >= 80 else 'bi-emoji-neutral' if stats.avg_score >= 60 else 'bi-emoji-frown' }}"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- جدول نتایج -->
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">تاریخچه کوییزها</h5>
+            {% if results %}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>تاریخ</th>
+                            <th>دسته‌بندی</th>
+                            <th>نمره</th>
+                            <th>زمان (ثانیه)</th>
+                            <th>وضعیت</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for result in results %}
+                        <tr>
+                            <td>{{ result.date.strftime('%Y/%m/%d %H:%M') }}</td>
+                            <td>{{ result.category }}</td>
+                            <td>{{ result.score }}%</td>
+                            <td>{{ result.time_taken }}</td>
+                            <td>
+                                {% if result.score >= 80 %}
+                                    <span class="badge bg-success">عالی</span>
+                                {% elif result.score >= 60 %}
+                                    <span class="badge bg-warning">خوب</span>
+                                {% else %}
+                                    <span class="badge bg-danger">نیاز به تلاش بیشتر</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-journal-x display-1 mb-3"></i>
+                <h5>هنوز در هیچ کوییزی شرکت نکرده‌اید</h5>
+                <a href="{{ url_for('index') }}" class="btn btn-primary mt-3">مشاهده کوییزها</a>
+            </div>
+            {% endif %}
+        </div>
     </div>
 </div>
+
+<!-- اسکریپت نمودار -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('progressChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: {{ results|map(attribute='date.strftime')|map('format', '%Y/%m/%d')|list|tojson }}.reverse(),
+            datasets: [{
+                label: 'نمرات',
+                data: {{ results|map(attribute='score')|list|tojson }}.reverse(),
+                borderColor: '#0d6efd',
+                tension: 0.4,
+                fill: true,
+                backgroundColor: 'rgba(13, 110, 253, 0.1)'
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100
+                }
+            }
+        }
+    });
+});
+</script>
 {% endblock %}
