@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مدیریت سوالات</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+
+<div class="container mt-5">
+    <h2>مدیریت سوالات</h2>
+
+    <!-- پیام‌های فلاش -->
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="alert alert-warning">
+                <ul>
+                    {% for message in messages %}
+                        <li>{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- فرم افزودن سوال جدید -->
+    <form method="POST">
+        <div class="form-group">
+            <label for="category">دسته‌بندی سوال</label>
+            <input type="text" class="form-control" id="category" name="category" required>
+        </div>
+
+        <div class="form-group">
+            <label for="question_text">متن سوال</label>
+            <textarea class="form-control" id="question_text" name="question_text" rows="4" required></textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="correct_answer">پاسخ صحیح</label>
+            <input type="text" class="form-control" id="correct_answer" name="correct_answer" required>
+        </div>
+
+        <div class="form-group">
+            <label for="wrong_answers">پاسخ‌های غلط (جدا شده با ویرگول)</label>
+            <input type="text" class="form-control" id="wrong_answers" name="wrong_answers" required>
+        </div>
+
+        <!-- فیلد سطح دشواری -->
+        <div class="form-group">
+            <label for="difficulty">سطح دشواری</label>
+            <select class="form-control" id="difficulty" name="difficulty" required>
+                <option value="easy">آسان</option>
+                <option value="medium">متوسط</option>
+                <option value="hard">سخت</option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary">اضافه کردن سوال</button>
+    </form>
+
+    <hr>
+
+    <!-- لیست سوالات موجود -->
+    <h3>سوالات موجود</h3>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>دسته‌بندی</th>
+                <th>متن سوال</th>
+                <th>پاسخ صحیح</th>
+                <th>پاسخ‌های غلط</th>
+                <th>سطح دشواری</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for question in questions %}
+                <tr>
+                    <td>{{ question.category }}</td>
+                    <td>{{ question.question_text }}</td>
+                    <td>{{ question.correct_answer }}</td>
+                    <td>{{ question.wrong_answers }}</td>
+                    <td>{{ question.difficulty }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
