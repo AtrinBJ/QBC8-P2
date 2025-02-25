@@ -1,0 +1,275 @@
+{% extends "base.html" %}
+
+{% block title %}مدیریت سوالات{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="mb-4">مدیریت سوالات</h2>
+
+    <!-- فرم افزودن سوال جدید -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h3 class="card-title">افزودن سوال جدید</h3>
+            <form method="POST" action="{{ url_for('manage_questions') }}">
+                <div class="mb-3">
+                    <label for="category" class="form-label">دسته‌بندی</label>
+                    <div class="input-group">
+                        <select class="form-control custom-select" id="category" name="category" required>
+                            <option value="">انتخاب دسته‌بندی...</option>
+                            {% for category in categories %}
+                            <option value="{{ category }}">{{ category }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="button" class="btn btn-outline-primary" id="add-category-btn">
+                            <i class="bi bi-plus"></i>
+                            افزودن دسته‌بندی جدید
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="question_text" class="form-label">متن سوال</label>
+                    <textarea class="form-control" id="question_text" name="question_text" rows="3" required></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label for="correct_answer" class="form-label">پاسخ صحیح</label>
+                    <input type="text" class="form-control" id="correct_answer" name="correct_answer" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">گزینه‌های نادرست</label>
+                    <div id="wrong_answers_container">
+                        <input type="text" class="form-control mb-2" name="wrong_answers[]" required>
+                        <input type="text" class="form-control mb-2" name="wrong_answers[]" required>
+                        <input type="text" class="form-control mb-2" name="wrong_answers[]" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i>
+                    افزودن سوال
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- دکمه دریافت سوالات از API -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h3 class="card-title">دریافت سوالات از API</h3>
+            <button id="import-questions" class="btn btn-success">
+                <i class="bi bi-cloud-download"></i>
+                دریافت سوالات جدید
+            </button>
+        </div>
+    </div>
+
+    <!-- لیست سوالات موجود -->
+    <div class="card">
+        <div class="card-body">
+            <h3 class="card-title">لیست سوالات</h3>
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>دسته‌بندی</th>
+                            <th>سوال</th>
+                            <th>پاسخ صحیح</th>
+                            <th>عملیات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for question in questions %}
+                        <tr id="question-{{ question.id }}">
+                            <td>{{ question.category }}</td>
+                            <td>{{ question.question_text }}</td>
+                            <td>{{ question.correct_answer }}</td>
+                            <td>
+                                <button class="btn btn-sm btn-danger" onclick="deleteQuestion({{ question.id }})">
+                                    <i class="bi bi-trash"></i>
+                                    حذف
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// اسکریپت برای افزودن دسته‌بندی جدید
+document.getElementById('add-category-btn').addEventListener('click', function() {
+    const newCategory = prompt('نام دسته‌بندی جدید را وارد کنید:');
+    if (newCategory && newCategory.trim()) {
+        const categorySelect = document.getElementById('category');
+
+        // بررسی تکراری نبودن دسته‌بندی
+        let exists = false;
+        for (let i = 0; i < categorySelect.options.length; i++) {
+            if (categorySelect.options[i].value === newCategory.trim()) {
+                exists = true;
+                break;
+            }
+        }
+
+        if (!exists) {
+            const option = document.createElement('option');
+            option.value = newCategory.trim();
+            option.text = newCategory.trim();
+            categorySelect.add(option);
+        }
+
+        // انتخاب دسته‌بندی جدید
+        categorySelect.value = newCategory.trim();
+    }
+});
+
+// حذف سوال
+function deleteQuestion(questionId) {
+    if (confirm('آیا از حذف این سوال اطمینان دارید؟')) {
+        fetch(`/admin/delete_question/${questionId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // حذف سطر مربوط به سوال از جدول
+                document.getElementById(`question-${questionId}`).remove();
+                alert('سوال با موفقیت حذف شد');
+            } else {
+                alert('خطا در حذف سوال: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('خطا در ارتباط با سرور');
+        });
+    }
+}
+
+// دریافت سوالات از API
+document.getElementById('import-questions').addEventListener('click', function() {
+    // نمایش پیام بارگذاری
+    this.innerHTML = '<i class="bi bi-hourglass-split"></i> در حال دریافت...';
+    this.disabled = true;
+
+    fetch('/import_questions', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({})
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`خطای سرور: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            alert(data.message || 'سوالات با موفقیت اضافه شدند');
+            location.reload();
+        } else {
+            alert('خطا: ' + (data.error || 'خطای نامشخص'));
+            // بازگرداندن دکمه به حالت اولیه
+            resetImportButton();
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('خطا در ارتباط با سرور: ' + error.message);
+        // بازگرداندن دکمه به حالت اولیه
+        resetImportButton();
+    });
+});
+
+// تابع برای بازگرداندن دکمه به حالت اولیه
+function resetImportButton() {
+    const importBtn = document.getElementById('import-questions');
+    if (importBtn) {
+        importBtn.innerHTML = '<i class="bi bi-cloud-download"></i> دریافت سوالات جدید';
+        importBtn.disabled = false;
+    }
+}
+</script>
+
+<style>
+/* استایل‌های عمومی */
+.card {
+    margin-bottom: 2rem;
+}
+
+.table td {
+    vertical-align: middle;
+}
+
+.btn-danger {
+    transition: all 0.2s ease;
+}
+
+.btn-danger:hover {
+    transform: translateY(-2px);
+}
+
+/* استایل برای رفع مشکل رنگ متن در لیست کشویی */
+select.form-control {
+    color: #333 !important; /* رنگ متن تیره برای لیست کشویی */
+    background-color: rgba(255, 255, 255, 0.9) !important; /* پس‌زمینه سفید با کمی شفافیت */
+}
+
+select.form-control option {
+    color: #333 !important; /* رنگ متن تیره برای گزینه‌ها */
+    background-color: white !important; /* پس‌زمینه سفید برای گزینه‌ها */
+}
+
+/* استایل برای فیلدهای متنی فرم - برای هماهنگی ظاهری */
+.form-control {
+    color: #333 !important;
+    background-color: rgba(255, 255, 255, 0.9) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.form-control:focus {
+    background-color: rgba(255, 255, 255, 1) !important;
+    color: #000 !important;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* استایل برای دکمه افزودن دسته‌بندی */
+#add-category-btn {
+    background-color: rgba(13, 110, 253, 0.1);
+    border-color: rgba(13, 110, 253, 0.3);
+    color: white;
+}
+
+#add-category-btn:hover {
+    background-color: rgba(13, 110, 253, 0.2);
+    border-color: rgba(13, 110, 253, 0.5);
+}
+
+/* اصلاح ظاهر جدول در تم تیره */
+.table {
+    color: var(--text-light);
+}
+
+.table thead th {
+    background-color: rgba(0, 0, 0, 0.3);
+    color: var(--text-light);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.table tbody td {
+    border-color: rgba(255, 255, 255, 0.1);
+}
+</style>
+{% endblock %}
