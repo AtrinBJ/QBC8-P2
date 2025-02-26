@@ -220,11 +220,14 @@ def delete_question(question_id):
 @app.route('/admin/analytics')
 @login_required
 def admin_analytics():
-    """صفحه آمار و تحلیل‌ها - فقط برای ادمین"""
+    """صفحه آمار و تحلیل‌های کلی - فقط برای ادمین"""
     user = User.query.get(session['user_id'])
     if not user or user.username != 'admin':
         flash('شما دسترسی به این بخش ندارید')
         return redirect(url_for('index'))
+
+    # لیست همه کاربران برای نمایش در منوی کشویی
+    all_users = User.query.filter(User.username != 'admin').all()
 
     # === آمارهای کلی (KPIs) ===
     total_users = User.query.count()
@@ -234,18 +237,19 @@ def admin_analytics():
 
     # === تحلیل عملکرد کاربران ===
     user_performance = db.session.query(
+        User.id,
         User.username,
         db.func.count(QuizResult.id).label('quiz_count'),
         db.func.avg(QuizResult.score).label('avg_score'),
         db.func.min(QuizResult.score).label('min_score'),
         db.func.max(QuizResult.score).label('max_score')
-    ).join(QuizResult).group_by(User.username).all()
+    ).join(QuizResult).group_by(User.id, User.username).all()
 
     # تبدیل user_performance به لیست دیکشنری‌ها برای دسترسی آسان‌تر
     user_performance_list = []
     for u in user_performance:
         # پیدا کردن بهترین دسته‌بندی برای کاربر
-        user_id = User.query.filter_by(username=u.username).first().id
+        user_id = u.id
         best_category_query = db.session.query(
             QuizResult.category,
             db.func.avg(QuizResult.score).label('avg_score')
@@ -260,6 +264,7 @@ def admin_analytics():
         best_category = best_category_query.category if best_category_query else "عمومی"
 
         user_performance_list.append({
+            'id': user_id,
             'username': u.username,
             'quiz_count': u.quiz_count,
             'avg_score': u.avg_score,
@@ -376,7 +381,191 @@ def admin_analytics():
                            category_stats=category_stats,
                            question_stats=question_stats,
                            questions_dict=questions_dict,
-                           chart_data=chart_data)
+                           chart_data=chart_data,
+                           all_users=all_users,
+                           selected_user=None)
+
+
+@app.route('/admin/user_analytics')
+@login_required
+def admin_user_analytics():
+    """صفحه آمار و تحلیل‌های کاربر خاص - فقط برای ادمین"""
+    user = User.query.get(session['user_id'])
+    if not user or user.username != 'admin':
+        flash('شما دسترسی به این بخش ندارید')
+        return redirect(url_for('index'))
+
+    # دریافت شناسه کاربر مورد نظر
+    user_id = request.args.get('user_id', type=int)
+    if not user_id:
+        flash('شناسه کاربر نامعتبر است')
+        return redirect(url_for('admin_analytics'))
+
+    # یافتن کاربر مورد نظر
+    selected_user = User.query.get(user_id)
+    if not selected_user:
+        flash('کاربر مورد نظر یافت نشد')
+        return redirect(url_for('admin_analytics'))
+
+    # لیست همه کاربران برای نمایش در منوی کشویی
+    all_users = User.query.filter(User.username != 'admin').all()
+
+    # === آمارهای کلی (KPIs) ===
+    total_users = User.query.count()
+    total_questions = Question.query.count()
+
+    # اطلاعات کاربر انتخاب شده
+    user_quizzes = QuizResult.query.filter_by(user_id=user_id).all()
+    total_quizzes = len(user_quizzes)
+    avg_total_score = sum(q.score for q in user_quizzes) / total_quizzes if total_quizzes > 0 else 0
+
+    # === تحلیل عملکرد کاربر انتخاب شده ===
+    user_performance = db.session.query(
+        User.id,
+        User.username,
+        db.func.count(QuizResult.id).label('quiz_count'),
+        db.func.avg(QuizResult.score).label('avg_score'),
+        db.func.min(QuizResult.score).label('min_score'),
+        db.func.max(QuizResult.score).label('max_score')
+    ).filter(User.id == user_id).join(QuizResult).group_by(User.id, User.username).first()
+
+    # تبدیل user_performance به لیست دیکشنری‌ها برای دسترسی آسان‌تر
+    user_performance_list = []
+    if user_performance:
+        # پیدا کردن بهترین دسته‌بندی برای کاربر
+        best_category_query = db.session.query(
+            QuizResult.category,
+            db.func.avg(QuizResult.score).label('avg_score')
+        ).filter(
+            QuizResult.user_id == user_id
+        ).group_by(
+            QuizResult.category
+        ).order_by(
+            db.func.avg(QuizResult.score).desc()
+        ).first()
+
+        best_category = best_category_query.category if best_category_query else "عمومی"
+
+        user_performance_list.append({
+            'id': user_performance.id,
+            'username': user_performance.username,
+            'quiz_count': user_performance.quiz_count,
+            'avg_score': user_performance.avg_score,
+            'min_score': user_performance.min_score,
+            'max_score': user_performance.max_score,
+            'category_best': best_category
+        })
+
+    # روند پیشرفت کاربر در طول زمان
+    user_progress = db.session.query(
+        QuizResult.date,
+        QuizResult.score
+    ).filter(
+        QuizResult.user_id == user_id
+    ).order_by(QuizResult.date).all()
+
+    # === تحلیل سوالات برای کاربر انتخاب شده ===
+    question_stats = {}
+    for result in user_quizzes:
+        if result.answers:  # اگر پاسخ‌ها ذخیره شده باشند
+            answers = json.loads(result.answers)
+            for question_id, answer in answers.items():
+                if question_id not in question_stats:
+                    question_stats[question_id] = {'total': 0, 'correct': 0}
+                question_stats[question_id]['total'] += 1
+                question = Question.query.get(int(question_id))
+                if question and answer == question.correct_answer:
+                    question_stats[question_id]['correct'] += 1
+
+    # دیکشنری برای دسترسی آسان به سوالات
+    questions_dict = {q.id: q for q in Question.query.all()}
+
+    # === تحلیل دسته‌بندی‌ها برای کاربر انتخاب شده ===
+    category_stats = db.session.query(
+        QuizResult.category,
+        db.func.count(QuizResult.id).label('total_attempts'),
+        db.func.avg(QuizResult.score).label('avg_score'),
+        db.func.min(QuizResult.score).label('min_score'),
+        db.func.max(QuizResult.score).label('max_score')
+    ).filter(
+        QuizResult.user_id == user_id
+    ).group_by(QuizResult.category).all()
+
+    # === تحلیل زمانی برای کاربر انتخاب شده ===
+    time_stats = db.session.query(
+        db.func.date(QuizResult.date).label('date'),
+        db.func.count(QuizResult.id).label('quiz_count'),
+        db.func.avg(QuizResult.score).label('avg_score')
+    ).filter(
+        QuizResult.user_id == user_id
+    ).group_by(
+        db.func.date(QuizResult.date)
+    ).order_by(
+        db.func.date(QuizResult.date)
+    ).all()
+
+    # === تحلیل سطح دشواری برای کاربر انتخاب شده ===
+    difficulty_stats = {
+        'آسان': {'count': 0, 'avg_score': 0},
+        'متوسط': {'count': 0, 'avg_score': 0},
+        'سخت': {'count': 0, 'avg_score': 0}
+    }
+
+    for result in user_quizzes:
+        if result.score >= 80:
+            level = 'آسان'
+        elif result.score >= 60:
+            level = 'متوسط'
+        else:
+            level = 'سخت'
+        difficulty_stats[level]['count'] += 1
+        difficulty_stats[level]['avg_score'] = (
+                                                       difficulty_stats[level]['avg_score'] + result.score
+                                               ) / 2 if difficulty_stats[level]['avg_score'] > 0 else result.score
+
+    # === آماده‌سازی داده‌ها برای نمودارها ===
+    chart_data = {
+        # داده‌های روند زمانی
+        'time_labels': [str(stat.date) for stat in time_stats],
+        'time_counts': [stat.quiz_count for stat in time_stats],
+        'time_scores': [float(stat.avg_score) for stat in time_stats],
+
+        # داده‌های دسته‌بندی
+        'categories': [stat.category for stat in category_stats],
+        'category_counts': [stat.total_attempts for stat in category_stats],
+        'category_scores': [float(stat.avg_score) for stat in category_stats],
+
+        # داده‌های کاربران - فقط کاربر انتخاب شده
+        'users': [selected_user.username],
+        'user_counts': [total_quizzes],
+        'user_scores': [float(avg_total_score)],
+
+        # داده‌های سطح دشواری
+        'difficulty_labels': list(difficulty_stats.keys()),
+        'difficulty_counts': [stats['count'] for stats in difficulty_stats.values()],
+        'difficulty_scores': [stats['avg_score'] for stats in difficulty_stats.values()],
+
+        # داده‌های پیشرفت کاربر انتخاب شده
+        'progress_data': {
+            selected_user.username: {
+                'dates': [str(date.date()) for date, _ in user_progress],
+                'scores': [float(score) for _, score in user_progress]
+            }
+        }
+    }
+
+    return render_template('admin/analytics.html',
+                           total_users=total_users,
+                           total_quizzes=total_quizzes,
+                           total_questions=total_questions,
+                           avg_total_score=round(avg_total_score, 2),
+                           user_performance=user_performance_list,
+                           category_stats=category_stats,
+                           question_stats=question_stats,
+                           questions_dict=questions_dict,
+                           chart_data=chart_data,
+                           all_users=all_users,
+                           selected_user=selected_user)
 
 
 @app.route('/import_questions', methods=['POST'])
@@ -498,8 +687,8 @@ def quiz(category):
         })
 
     return render_template('quiz.html',
-                           questions=quiz_questions,
-                           category=category)
+                         questions=quiz_questions,
+                         category=category)
 
 
 @app.route('/submit_quiz', methods=['POST'])
