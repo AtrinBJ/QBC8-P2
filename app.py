@@ -605,7 +605,7 @@ def profile():
     for result in reversed(results):
         if hasattr(result, 'date') and result.date:
             try:
-                chart_labels.append(result.date.strftime('%Y/%m/%d'))
+                chart_labels.append(result.date.strftime('%m/%d'))
                 chart_scores.append(result.score)
             except Exception as e:
                 print(f"Error formatting date: {e}")

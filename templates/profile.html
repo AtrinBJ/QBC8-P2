@@ -9,9 +9,9 @@
         <div class="col-md-4">
             <div class="card">
                 <div class="card-body text-center">
-                    <i class="bi bi-person-circle display-1 mb-3"></i>
+                    <i class="bi bi-person-circle display-5"></i>
                     <h4>{{ user.username }}</h4>
-                    <p class="text-muted">{{ user.email }}</p>
+                    <p class="">{{ user.email }}</p>
                     <hr>
                     <div class="row">
                         <div class="col-6">
@@ -28,7 +28,7 @@
         </div>
 
         <!-- فرم ویرایش پروفایل -->
-        <div class="col-md-8">
+        <div class="col-md-4">
             <div class="card">
                 <div class="card-body">
                     <h2>ویرایش پروفایل</h2>
@@ -43,17 +43,16 @@
                 </div>
             </div>
         </div>
-    </div>
-
         <!-- نمودار پیشرفت -->
-        <div class="col-md-8">
+        <div class="col-md-4">
             <div class="card">
                 <div class="card-body">
                     <h5 class="card-title">روند پیشرفت</h5>
-                    <canvas id="progressChart"></canvas>
+                    <canvas id="progressChart" style="background: #efefef;border-radius: 2px;"></canvas>
                 </div>
             </div>
         </div>
+    </div>
     </div>
 
     <!-- آمار دسته‌بندی‌ها -->
@@ -140,7 +139,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 data: {{ chart_scores|tojson }},
                 borderColor: '#0d6efd',
                 tension: 0.4,
-                fill: true,
+                fill: false,
                 backgroundColor: 'rgba(13, 110, 253, 0.1)'
             }]
         },
@@ -157,6 +156,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     max: 100
                 }
             }
+
         }
     });
 });
