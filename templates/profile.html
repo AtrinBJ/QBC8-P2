@@ -61,7 +61,7 @@
         <div class="col-md-4 mb-3">
             <div class="card">
                 <div class="card-body">
-                    <h5 class="card-title">{{ category }}</h5>
+                    <h5 class="card-title">{{ category | safe }}</h5>
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <p class="mb-0">تعداد: {{ stats.count }}</p>
@@ -97,7 +97,7 @@
                         {% for result in results %}
                         <tr>
                             <td>{{ result.date.strftime('%Y/%m/%d %H:%M') }}</td>
-                            <td>{{ result.category }}</td>
+                            <td>{{ result.category | safe }}</td>
                             <td>{{ result.score }}%</td>
                             <td>{{ result.time_taken }}</td>
                             <td>
@@ -129,6 +129,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    Chart.defaults.font.family = "Vazir"
     const ctx = document.getElementById('progressChart').getContext('2d');
     new Chart(ctx, {
         type: 'line',

@@ -128,7 +128,7 @@
             <div class="card">
                 <div class="card-body">
                     <h5 class="card-title">روند زمانی</h5>
-                    <canvas id="timeChart"></canvas>
+                    <canvas id="timeChart" style="background: #efefef;border-radius: 2px;"></canvas>
                 </div>
             </div>
         </div>
@@ -193,7 +193,7 @@
                             <td>{{ "%.1f"|format(user.avg_score) }}%</td>
                             <td>{{ user.min_score }}%</td>
                             <td>{{ user.max_score }}%</td>
-                            <td>{{ user.category_best }}</td>
+                            <td>{{ user.category_best | safe }}</td>
                             <td>
                                 {% if user.avg_score >= 80 %}
                                     <span class="badge bg-success">عالی</span>
@@ -240,7 +240,7 @@
                             <td>{{ user.username }}</td>
                             <td>{{ user.quiz_count }}</td>
                             <td>{{ "%.1f"|format(user.avg_score) }}%</td>
-                            <td>{{ user.category_best }}</td>
+                            <td>{{ user.category_best | safe }}</td>
                             <td>
                                 <a href="{{ url_for('admin_user_analytics', user_id=user.id) }}" class="btn btn-sm btn-primary">
                                     <i class="bi bi-bar-chart-fill"></i>
@@ -275,7 +275,7 @@
                     <tbody>
                         {% for stat in category_stats %}
                         <tr>
-                            <td>{{ stat.category }}</td>
+                            <td>{{ stat.category | safe }}</td>
                             <td>{{ stat.total_attempts }}</td>
                             <td>{{ "%.1f"|format(stat.avg_score) }}%</td>
                             <td>{{ "%.1f"|format(stat.min_score) }}%</td>
@@ -324,6 +324,8 @@
 document.addEventListener('DOMContentLoaded', function() {
     console.log("DOM loaded for analytics page");
 
+    Chart.defaults.font.family = "Vazir"
+
     // رنگ‌های سفارشی برای نمودارها
     const colors = {
         blue: 'rgba(54, 162, 235, 0.7)',
@@ -335,7 +337,7 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     // داده‌های نمودارها
-    const chartData = {{ chart_data|tojson }};
+    const chartData = {{ chart_data | tojson }};
     console.log("Chart data loaded:", chartData);
 
     try {

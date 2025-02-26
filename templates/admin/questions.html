@@ -17,7 +17,7 @@
                         <select class="form-control custom-select" id="category" name="category" required>
                             <option value="">انتخاب دسته‌بندی...</option>
                             {% for category in categories %}
-                            <option value="{{ category }}">{{ category }}</option>
+                            <option value="{{ category }}">{{ category | safe }}</option>
                             {% endfor %}
                         </select>
                         <button type="button" class="btn btn-outline-primary" id="add-category-btn">
@@ -82,9 +82,9 @@
                     <tbody>
                         {% for question in questions %}
                         <tr id="question-{{ question.id }}">
-                            <td>{{ question.category }}</td>
-                            <td>{{ question.question_text }}</td>
-                            <td>{{ question.correct_answer }}</td>
+                            <td>{{ question.category | safe }}</td>
+                            <td>{{ question.question_text | safe }}</td>
+                            <td>{{ question.correct_answer | safe }}</td>
                             <td>
                                 <button class="btn btn-sm btn-danger" onclick="deleteQuestion({{ question.id }})">
                                     <i class="bi bi-trash"></i>

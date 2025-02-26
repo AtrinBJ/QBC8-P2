@@ -116,3 +116,7 @@ label {
         transform: translateY(0);
     }
 }
+
+.table-responsive {
+    border-radius: 2px;
+}
