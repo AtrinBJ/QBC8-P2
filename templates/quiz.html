@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+{% extends "base.html" %}
+
+{% block title %}کوییز {{ category }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>کوییز {{ category }}</h2>
+                <div class="d-flex align-items-center">
+                    <div class="me-4">
+                        <i class="bi bi-clock"></i>
+                        <span id="timer" class="ms-1">10:00</span>
+                    </div>
+                    <div>
+                        سوال <span id="currentQuestion">1</span> از {{ questions|length }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="progress mb-4" style="height: 10px;">
+                <div id="progressBar" class="progress-bar" role="progressbar" style="width: 0%"></div>
+            </div>
+
+            <form id="quizForm" data-category="{{ category }}" data-total-questions="{{ questions|length }}">
+                {% for question in questions %}
+                <div id="question-{{ loop.index }}" class="question-card card mb-4" {% if loop.index != 1 %}style="display: none"{% endif %}>
+                    <div class="card-body">
+                        <h5 class="card-title mb-4">{{ question.question }}</h5>
+                        <div class="options">
+                            {% for option in question.options %}
+                            <div class="mb-3">
+                                <input type="radio" class="btn-check"
+                                       name="question-{{ question.id }}"
+                                       id="option-{{ question.id }}-{{ loop.index }}"
+                                       value="{{ option }}"
+                                       required>
+                                <label class="btn btn-outline-primary w-100 text-start"
+                                       for="option-{{ question.id }}-{{ loop.index }}">
+                                    {{ option }}
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="card-footer d-flex justify-content-between align-items-center">
+                        {% if not loop.first %}
+                        <button type="button" class="btn btn-secondary nav-btn" data-direction="prev" data-question="1">
+                            <i class="bi bi-arrow-left"></i> سوال قبلی
+                        </button>
+                        {% else %}
+                        <div></div>
+                        {% endif %}
+
+                        {% if not loop.last %}
+                        <button type="button" class="btn btn-primary nav-btn" data-direction="next" data-question="3">
+                            سوال بعدی <i class="bi bi-arrow-right"></i>
+                        </button>
+                        {% else %}
+                        <button type="button" id="finishQuiz" class="btn btn-danger">پایان کوئیز</button>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const quizForm = document.getElementById('quizForm');
+    const totalQuestions = parseInt(quizForm.dataset.totalQuestions);
+    let currentQuestion = 1;
+
+    function showQuestion(num) {
+        console.log(`🔄 در حال نمایش سوال ${num}`);
+
+        let currentElement = document.getElementById(`question-${currentQuestion}`);
+        let nextElement = document.getElementById(`question-${num}`);
+
+        if (!nextElement) {
+            console.error(`❌ خطا: سوال ${num} یافت نشد!`);
+            return;
+        }
+
+        if (currentElement) {
+            currentElement.style.display = 'none';
+        }
+        nextElement.style.display = 'block';
+
+        currentQuestion = num;
+        document.getElementById('currentQuestion').textContent = num;
+        document.getElementById('progressBar').style.width = `${(num / totalQuestions) * 100}%`;
+
+        console.log(`✅ سوال ${currentQuestion} نمایش داده شد`);
+    }
+
+    document.querySelectorAll('.nav-btn').forEach(button => {
+        button.addEventListener('click', function () {
+            const direction = this.dataset.direction;
+            const targetQuestion = parseInt(this.dataset.question);
+
+            if (direction === 'next') {
+                let currentCard = document.getElementById(`question-${currentQuestion}`);
+                if (!currentCard) {
+                    console.error(`❌ خطا: سوال ${currentQuestion} یافت نشد!`);
+                    return;
+                }
+                let selectedOption = currentCard.querySelector('input[type="radio"]:checked');
+                if (!selectedOption) {
+                    alert('لطفاً یک گزینه را انتخاب کنید');
+                    return;
+                }
+            }
+
+            showQuestion(targetQuestion);
+        });
+    });
+});
+</script>
+{% endblock %}
