@@ -356,6 +356,22 @@ def category_analysis():
 
     return render_template('category_analysis.html', category_data=category_data)
 
+@app.route('/analytics')
+def analytics():
+    """صفحه انتخاب کاربر برای مشاهده آمار"""
+    users = User.query.all()
+    return render_template('select_user.html', users=users)
+
+
+@app.route('/admin_user_analytics/<int:user_id>')
+def admin_user_analytics(user_id):
+    """صفحه آمار یک کاربر خاص"""
+    user = User.query.get_or_404(user_id)
+    user_results = QuizResult.query.filter_by(user_id=user.id).all()
+
+    avg_score = db.session.query(db.func.avg(QuizResult.score)).filter(QuizResult.user_id == user.id).scalar() or 0
+
+    return render_template('analytics.html', selected_user=user, user_results=user_results, avg_total_score=avg_score)
 
 # تحلیل زمانی
 @app.route('/score_trend')
