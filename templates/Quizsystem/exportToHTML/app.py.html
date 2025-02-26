@@ -1,0 +1,648 @@
+<html>
+<head>
+<title>app.py</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #8c8c8c; font-style: italic;}
+.s1 { color: #080808;}
+.s2 { color: #0033b3;}
+.s3 { color: #067d17;}
+.s4 { color: #1750eb;}
+.s5 { color: #0037a6;}
+</style>
+</head>
+<body bgcolor="#ffffff">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#c0c0c0" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+app.py</font>
+</center></td></tr></table>
+<pre><span class="s0"># وارد کردن کتابخانه‌های مورد نیاز</span>
+<span class="s2">from </span><span class="s1">flask </span><span class="s2">import </span><span class="s1">Flask, render_template, request, redirect, url_for, flash, session, jsonify</span>
+<span class="s2">from </span><span class="s1">flask_sqlalchemy </span><span class="s2">import </span><span class="s1">SQLAlchemy</span>
+<span class="s2">from </span><span class="s1">flask_login </span><span class="s2">import </span><span class="s1">LoginManager, UserMixin, login_user, login_required, logout_user, current_user</span>
+<span class="s2">from </span><span class="s1">werkzeug.security </span><span class="s2">import </span><span class="s1">generate_password_hash, check_password_hash</span>
+<span class="s2">import </span><span class="s1">requests</span>
+<span class="s2">import </span><span class="s1">json</span>
+<span class="s2">from </span><span class="s1">datetime </span><span class="s2">import </span><span class="s1">datetime</span>
+<span class="s2">import </span><span class="s1">os</span>
+<span class="s2">import </span><span class="s1">itertools</span>
+
+<span class="s0"># تنظیمات اولیه فلسک</span>
+<span class="s1">app = Flask(__name__)</span>
+<span class="s0"># کلید رمزنگاری برای سشن‌ها - در محیط تولید باید تغییر کند</span>
+<span class="s1">app.config[</span><span class="s3">'SECRET_KEY'</span><span class="s1">] = </span><span class="s3">'your-secret-key-here'</span>
+<span class="s0"># آدرس دیتابیس SQLite</span>
+<span class="s1">app.config[</span><span class="s3">'SQLALCHEMY_DATABASE_URI'</span><span class="s1">] = </span><span class="s3">'sqlite:///quiz.db'</span>
+<span class="s1">app.config[</span><span class="s3">'SQLALCHEMY_TRACK_MODIFICATIONS'</span><span class="s1">] = </span><span class="s2">False</span>
+
+<span class="s0"># راه‌اندازی Flask-Login برای مدیریت سشن‌های کاربران</span>
+<span class="s1">login_manager = LoginManager()</span>
+<span class="s1">login_manager.init_app(app)</span>
+<span class="s1">login_manager.login_view = </span><span class="s3">'login'  </span><span class="s0"># مسیر صفحه لاگین</span>
+
+<span class="s0"># راه‌اندازی SQLAlchemy</span>
+<span class="s1">db = SQLAlchemy(app)</span>
+
+
+<span class="s0"># تعریف مدل‌های دیتابیس</span>
+<span class="s2">class </span><span class="s1">User(UserMixin, db.Model):</span>
+    <span class="s0">&quot;&quot;&quot;مدل کاربر برای ذخیره اطلاعات کاربران&quot;&quot;&quot;</span>
+    <span class="s1">id = db.Column(db.Integer, primary_key=</span><span class="s2">True</span><span class="s1">)</span>
+    <span class="s1">username = db.Column(db.String(</span><span class="s4">80</span><span class="s1">), unique=</span><span class="s2">True</span><span class="s1">, nullable=</span><span class="s2">False</span><span class="s1">)</span>
+    <span class="s1">email = db.Column(db.String(</span><span class="s4">120</span><span class="s1">), unique=</span><span class="s2">True</span><span class="s1">, nullable=</span><span class="s2">False</span><span class="s1">)</span>
+    <span class="s1">password_hash = db.Column(db.String(</span><span class="s4">120</span><span class="s1">), nullable=</span><span class="s2">False</span><span class="s1">)</span>
+    <span class="s0"># ارتباط یک به چند با نتایج کوییز</span>
+    <span class="s1">quizzes = db.relationship(</span><span class="s3">'QuizResult'</span><span class="s1">, backref=</span><span class="s3">'user'</span><span class="s1">, lazy=</span><span class="s2">True</span><span class="s1">)</span>
+
+
+<span class="s1">@login_manager.user_loader</span>
+<span class="s2">def </span><span class="s1">load_user(user_id):</span>
+    <span class="s0">&quot;&quot;&quot;تابع لازم برای Flask-Login جهت بارگذاری کاربر&quot;&quot;&quot;</span>
+    <span class="s2">return </span><span class="s1">User.query.get(int(user_id))</span>
+
+
+<span class="s2">class </span><span class="s1">Question(db.Model):</span>
+    <span class="s0">&quot;&quot;&quot;مدل سوال برای ذخیره سوالات کوییز&quot;&quot;&quot;</span>
+    <span class="s1">id = db.Column(db.Integer, primary_key=</span><span class="s2">True</span><span class="s1">)</span>
+    <span class="s1">category = db.Column(db.String(</span><span class="s4">50</span><span class="s1">), nullable=</span><span class="s2">False</span><span class="s1">)</span>
+    <span class="s1">question_text = db.Column(db.String(</span><span class="s4">500</span><span class="s1">), nullable=</span><span class="s2">False</span><span class="s1">)</span>
+    <span class="s1">correct_answer = db.Column(db.String(</span><span class="s4">200</span><span class="s1">), nullable=</span><span class="s2">False</span><span class="s1">)</span>
+    <span class="s0"># گزینه‌های غلط به صورت JSON ذخیره می‌شوند</span>
+    <span class="s1">wrong_answers = db.Column(db.String(</span><span class="s4">500</span><span class="s1">), nullable=</span><span class="s2">False</span><span class="s1">)</span>
+
+
+<span class="s2">class </span><span class="s1">QuizResult(db.Model):</span>
+    <span class="s0">&quot;&quot;&quot;مدل نتایج برای ذخیره نتایج کوییزها&quot;&quot;&quot;</span>
+    <span class="s1">id = db.Column(db.Integer, primary_key=</span><span class="s2">True</span><span class="s1">)</span>
+    <span class="s1">user_id = db.Column(db.Integer, db.ForeignKey(</span><span class="s3">'user.id'</span><span class="s1">), nullable=</span><span class="s2">False</span><span class="s1">)</span>
+    <span class="s1">category = db.Column(db.String(</span><span class="s4">50</span><span class="s1">), nullable=</span><span class="s2">False</span><span class="s1">)</span>
+    <span class="s1">score = db.Column(db.Integer, nullable=</span><span class="s2">False</span><span class="s1">)</span>
+    <span class="s1">date = db.Column(db.DateTime, nullable=</span><span class="s2">False</span><span class="s1">, default=datetime.utcnow)</span>
+    <span class="s1">time_taken = db.Column(db.Integer, nullable=</span><span class="s2">False</span><span class="s1">)  </span><span class="s0"># زمان به ثانیه</span>
+    <span class="s1">answers = db.Column(db.Text, nullable=</span><span class="s2">True</span><span class="s1">)  </span><span class="s0"># پاسخ‌های کاربر به صورت JSON</span>
+
+
+<span class="s0"># === مسیرهای برنامه ===</span>
+
+<span class="s1">@app.route(</span><span class="s3">'/'</span><span class="s1">)</span>
+<span class="s2">def </span><span class="s1">index():</span>
+    <span class="s0">&quot;&quot;&quot;صفحه اصلی برنامه&quot;&quot;&quot;</span>
+    <span class="s2">if </span><span class="s3">'user_id' </span><span class="s2">not in </span><span class="s1">session:</span>
+        <span class="s2">return </span><span class="s1">redirect(url_for(</span><span class="s3">'login'</span><span class="s1">))</span>
+
+    <span class="s0"># هدایت به صفحه پروفایل به جای نمایش صفحه اصلی</span>
+    <span class="s2">return </span><span class="s1">redirect(url_for(</span><span class="s3">'profile'</span><span class="s1">))</span>
+
+
+<span class="s1">@app.route(</span><span class="s3">'/categories'</span><span class="s1">)</span>
+<span class="s1">@login_required</span>
+<span class="s2">def </span><span class="s1">categories():</span>
+    <span class="s0">&quot;&quot;&quot;نمایش صفحه دسته‌بندی‌های کوییز&quot;&quot;&quot;</span>
+    <span class="s0"># دریافت کاربر جاری</span>
+    <span class="s1">user = User.query.get(session[</span><span class="s3">'user_id'</span><span class="s1">])</span>
+
+    <span class="s0"># دریافت تمام دسته‌بندی‌های موجود</span>
+    <span class="s1">categories = db.session.query(Question.category).distinct().all()</span>
+    <span class="s1">categories = [cat[</span><span class="s4">0</span><span class="s1">] </span><span class="s2">for </span><span class="s1">cat </span><span class="s2">in </span><span class="s1">categories]</span>
+
+    <span class="s2">return </span><span class="s1">render_template(</span><span class="s3">'index.html'</span><span class="s1">, categories=categories, user=user)</span>
+
+
+<span class="s1">@app.route(</span><span class="s3">'/login'</span><span class="s1">, methods=[</span><span class="s3">'GET'</span><span class="s1">, </span><span class="s3">'POST'</span><span class="s1">])</span>
+<span class="s2">def </span><span class="s1">login():</span>
+    <span class="s0">&quot;&quot;&quot;مدیریت ورود کاربران&quot;&quot;&quot;</span>
+    <span class="s2">if </span><span class="s1">request.method == </span><span class="s3">'POST'</span><span class="s1">:</span>
+        <span class="s1">username = request.form[</span><span class="s3">'username'</span><span class="s1">]</span>
+        <span class="s1">password = request.form[</span><span class="s3">'password'</span><span class="s1">]</span>
+        <span class="s1">user = User.query.filter_by(username=username).first()</span>
+
+        <span class="s2">if </span><span class="s1">user </span><span class="s2">and </span><span class="s1">check_password_hash(user.password_hash, password):</span>
+            <span class="s1">login_user(user)</span>
+            <span class="s1">session[</span><span class="s3">'user_id'</span><span class="s1">] = user.id</span>
+            <span class="s1">flash(</span><span class="s3">'با موفقیت وارد شدید'</span><span class="s1">)</span>
+            <span class="s0"># تغییر مسیر به صفحه پروفایل بعد از ورود</span>
+            <span class="s2">return </span><span class="s1">redirect(url_for(</span><span class="s3">'profile'</span><span class="s1">))</span>
+
+        <span class="s1">flash(</span><span class="s3">'نام کاربری یا رمز عبور اشتباه است'</span><span class="s1">)</span>
+    <span class="s2">return </span><span class="s1">render_template(</span><span class="s3">'login.html'</span><span class="s1">)</span>
+
+
+<span class="s1">@app.route(</span><span class="s3">'/register'</span><span class="s1">, methods=[</span><span class="s3">'GET'</span><span class="s1">, </span><span class="s3">'POST'</span><span class="s1">])</span>
+<span class="s2">def </span><span class="s1">register():</span>
+    <span class="s0">&quot;&quot;&quot;مدیریت ثبت نام کاربران جدید&quot;&quot;&quot;</span>
+    <span class="s2">if </span><span class="s1">request.method == </span><span class="s3">'POST'</span><span class="s1">:</span>
+        <span class="s1">username = request.form[</span><span class="s3">'username'</span><span class="s1">]</span>
+        <span class="s1">email = request.form[</span><span class="s3">'email'</span><span class="s1">]</span>
+        <span class="s1">password = request.form[</span><span class="s3">'password'</span><span class="s1">]</span>
+
+        <span class="s0"># بررسی تکراری نبودن نام کاربری</span>
+        <span class="s2">if </span><span class="s1">User.query.filter_by(username=username).first():</span>
+            <span class="s1">flash(</span><span class="s3">'این نام کاربری قبلاً ثبت شده است'</span><span class="s1">)</span>
+            <span class="s2">return </span><span class="s1">redirect(url_for(</span><span class="s3">'register'</span><span class="s1">))</span>
+
+        <span class="s0"># ایجاد کاربر جدید</span>
+        <span class="s1">user = User(</span>
+            <span class="s1">username=username,</span>
+            <span class="s1">email=email,</span>
+            <span class="s1">password_hash=generate_password_hash(password)</span>
+        <span class="s1">)</span>
+        <span class="s1">db.session.add(user)</span>
+        <span class="s1">db.session.commit()</span>
+
+        <span class="s0"># ورود کاربر پس از ثبت‌نام</span>
+        <span class="s1">login_user(user)</span>
+        <span class="s1">session[</span><span class="s3">'user_id'</span><span class="s1">] = user.id</span>
+        <span class="s1">flash(</span><span class="s3">'ثبت نام با موفقیت انجام شد'</span><span class="s1">)</span>
+
+        <span class="s0"># هدایت به صفحه پروفایل</span>
+        <span class="s2">return </span><span class="s1">redirect(url_for(</span><span class="s3">'profile'</span><span class="s1">))</span>
+
+    <span class="s2">return </span><span class="s1">render_template(</span><span class="s3">'register.html'</span><span class="s1">)</span>
+
+
+<span class="s1">@app.route(</span><span class="s3">'/logout'</span><span class="s1">)</span>
+<span class="s1">@login_required</span>
+<span class="s2">def </span><span class="s1">logout():</span>
+    <span class="s0">&quot;&quot;&quot;خروج کاربر از سیستم&quot;&quot;&quot;</span>
+    <span class="s1">logout_user()</span>
+    <span class="s1">session.clear()</span>
+    <span class="s1">flash(</span><span class="s3">'با موفقیت خارج شدید'</span><span class="s1">)</span>
+    <span class="s2">return </span><span class="s1">redirect(url_for(</span><span class="s3">'login'</span><span class="s1">))</span>
+
+
+<span class="s1">@app.route(</span><span class="s3">'/admin/questions'</span><span class="s1">, methods=[</span><span class="s3">'GET'</span><span class="s1">, </span><span class="s3">'POST'</span><span class="s1">])</span>
+<span class="s1">@login_required</span>
+<span class="s2">def </span><span class="s1">manage_questions():</span>
+    <span class="s0">&quot;&quot;&quot;مدیریت سوالات - فقط برای ادمین&quot;&quot;&quot;</span>
+    <span class="s1">user = User.query.get(session[</span><span class="s3">'user_id'</span><span class="s1">])</span>
+    <span class="s2">if not </span><span class="s1">user </span><span class="s2">or </span><span class="s1">user.username != </span><span class="s3">'admin'</span><span class="s1">:</span>
+        <span class="s1">flash(</span><span class="s3">'شما دسترسی به این بخش ندارید'</span><span class="s1">)</span>
+        <span class="s2">return </span><span class="s1">redirect(url_for(</span><span class="s3">'index'</span><span class="s1">))</span>
+
+    <span class="s2">if </span><span class="s1">request.method == </span><span class="s3">'POST'</span><span class="s1">:</span>
+        <span class="s0"># دریافت اطلاعات از فرم</span>
+        <span class="s1">category = request.form[</span><span class="s3">'category'</span><span class="s1">]</span>
+        <span class="s1">question_text = request.form[</span><span class="s3">'question_text'</span><span class="s1">]</span>
+        <span class="s1">correct_answer = request.form[</span><span class="s3">'correct_answer'</span><span class="s1">]</span>
+        <span class="s1">wrong_answers = request.form.getlist(</span><span class="s3">'wrong_answers[]'</span><span class="s1">)</span>
+
+        <span class="s0"># ایجاد سوال جدید</span>
+        <span class="s1">question = Question(</span>
+            <span class="s1">category=category,</span>
+            <span class="s1">question_text=question_text,</span>
+            <span class="s1">correct_answer=correct_answer,</span>
+            <span class="s1">wrong_answers=json.dumps(wrong_answers)</span>
+        <span class="s1">)</span>
+
+        <span class="s1">db.session.add(question)</span>
+        <span class="s1">db.session.commit()</span>
+
+        <span class="s1">flash(</span><span class="s3">'سوال با موفقیت اضافه شد'</span><span class="s1">)</span>
+        <span class="s2">return </span><span class="s1">redirect(url_for(</span><span class="s3">'manage_questions'</span><span class="s1">))</span>
+
+    <span class="s0"># دریافت تمام دسته‌بندی‌های موجود در دیتابیس</span>
+    <span class="s1">categories = db.session.query(Question.category).distinct().all()</span>
+    <span class="s1">categories = [category[</span><span class="s4">0</span><span class="s1">] </span><span class="s2">for </span><span class="s1">category </span><span class="s2">in </span><span class="s1">categories]</span>
+
+    <span class="s0"># اضافه کردن دسته‌بندی‌های پیش‌فرض اگر در لیست نیستند</span>
+    <span class="s1">default_categories = [</span><span class="s3">'عمومی'</span><span class="s1">, </span><span class="s3">'علوم'</span><span class="s1">, </span><span class="s3">'تاریخ'</span><span class="s1">, </span><span class="s3">'ورزشی'</span><span class="s1">]</span>
+    <span class="s2">for </span><span class="s1">category </span><span class="s2">in </span><span class="s1">default_categories:</span>
+        <span class="s2">if </span><span class="s1">category </span><span class="s2">not in </span><span class="s1">categories:</span>
+            <span class="s1">categories.append(category)</span>
+
+    <span class="s0"># مرتب‌سازی دسته‌بندی‌ها</span>
+    <span class="s1">categories.sort()</span>
+
+    <span class="s1">questions = Question.query.all()</span>
+    <span class="s2">return </span><span class="s1">render_template(</span><span class="s3">'admin/questions.html'</span><span class="s1">, questions=questions, categories=categories)</span>
+
+
+<span class="s1">@app.route(</span><span class="s3">'/admin/delete_question/&lt;int:question_id&gt;'</span><span class="s1">, methods=[</span><span class="s3">'POST'</span><span class="s1">])</span>
+<span class="s1">@login_required</span>
+<span class="s2">def </span><span class="s1">delete_question(question_id):</span>
+    <span class="s0">&quot;&quot;&quot;حذف یک سوال - فقط برای ادمین&quot;&quot;&quot;</span>
+    <span class="s1">user = User.query.get(session[</span><span class="s3">'user_id'</span><span class="s1">])</span>
+    <span class="s2">if not </span><span class="s1">user </span><span class="s2">or </span><span class="s1">user.username != </span><span class="s3">'admin'</span><span class="s1">:</span>
+        <span class="s2">return </span><span class="s1">jsonify({</span><span class="s3">'error'</span><span class="s1">: </span><span class="s3">'دسترسی غیرمجاز'</span><span class="s1">}), </span><span class="s4">403</span>
+
+    <span class="s1">question = Question.query.get_or_404(question_id)</span>
+    <span class="s2">try</span><span class="s1">:</span>
+        <span class="s1">db.session.delete(question)</span>
+        <span class="s1">db.session.commit()</span>
+        <span class="s2">return </span><span class="s1">jsonify({</span><span class="s3">'success'</span><span class="s1">: </span><span class="s2">True</span><span class="s1">, </span><span class="s3">'message'</span><span class="s1">: </span><span class="s3">'سوال با موفقیت حذف شد'</span><span class="s1">})</span>
+    <span class="s2">except </span><span class="s1">Exception </span><span class="s2">as </span><span class="s1">e:</span>
+        <span class="s1">db.session.rollback()</span>
+        <span class="s2">return </span><span class="s1">jsonify({</span><span class="s3">'error'</span><span class="s1">: str(e)}), </span><span class="s4">500</span>
+
+
+<span class="s1">@app.route(</span><span class="s3">'/admin/analytics'</span><span class="s1">)</span>
+<span class="s1">@login_required</span>
+<span class="s2">def </span><span class="s1">admin_analytics():</span>
+    <span class="s0">&quot;&quot;&quot;صفحه آمار و تحلیل‌ها - فقط برای ادمین&quot;&quot;&quot;</span>
+    <span class="s1">user = User.query.get(session[</span><span class="s3">'user_id'</span><span class="s1">])</span>
+    <span class="s2">if not </span><span class="s1">user </span><span class="s2">or </span><span class="s1">user.username != </span><span class="s3">'admin'</span><span class="s1">:</span>
+        <span class="s1">flash(</span><span class="s3">'شما دسترسی به این بخش ندارید'</span><span class="s1">)</span>
+        <span class="s2">return </span><span class="s1">redirect(url_for(</span><span class="s3">'index'</span><span class="s1">))</span>
+
+    <span class="s0"># === آمارهای کلی (KPIs) ===</span>
+    <span class="s1">total_users = User.query.count()</span>
+    <span class="s1">total_quizzes = QuizResult.query.count()</span>
+    <span class="s1">total_questions = Question.query.count()</span>
+    <span class="s1">avg_total_score = db.session.query(db.func.avg(QuizResult.score)).scalar() </span><span class="s2">or </span><span class="s4">0</span>
+
+    <span class="s0"># === تحلیل عملکرد کاربران ===</span>
+    <span class="s1">user_performance = db.session.query(</span>
+        <span class="s1">User.username,</span>
+        <span class="s1">db.func.count(QuizResult.id).label(</span><span class="s3">'quiz_count'</span><span class="s1">),</span>
+        <span class="s1">db.func.avg(QuizResult.score).label(</span><span class="s3">'avg_score'</span><span class="s1">),</span>
+        <span class="s1">db.func.min(QuizResult.score).label(</span><span class="s3">'min_score'</span><span class="s1">),</span>
+        <span class="s1">db.func.max(QuizResult.score).label(</span><span class="s3">'max_score'</span><span class="s1">)</span>
+    <span class="s1">).join(QuizResult).group_by(User.username).all()</span>
+
+    <span class="s0"># تبدیل user_performance به لیست دیکشنری‌ها برای دسترسی آسان‌تر</span>
+    <span class="s1">user_performance_list = []</span>
+    <span class="s2">for </span><span class="s1">u </span><span class="s2">in </span><span class="s1">user_performance:</span>
+        <span class="s0"># پیدا کردن بهترین دسته‌بندی برای کاربر</span>
+        <span class="s1">user_id = User.query.filter_by(username=u.username).first().id</span>
+        <span class="s1">best_category_query = db.session.query(</span>
+            <span class="s1">QuizResult.category,</span>
+            <span class="s1">db.func.avg(QuizResult.score).label(</span><span class="s3">'avg_score'</span><span class="s1">)</span>
+        <span class="s1">).filter(</span>
+            <span class="s1">QuizResult.user_id == user_id</span>
+        <span class="s1">).group_by(</span>
+            <span class="s1">QuizResult.category</span>
+        <span class="s1">).order_by(</span>
+            <span class="s1">db.func.avg(QuizResult.score).desc()</span>
+        <span class="s1">).first()</span>
+
+        <span class="s1">best_category = best_category_query.category </span><span class="s2">if </span><span class="s1">best_category_query </span><span class="s2">else </span><span class="s3">&quot;عمومی&quot;</span>
+
+        <span class="s1">user_performance_list.append({</span>
+            <span class="s3">'username'</span><span class="s1">: u.username,</span>
+            <span class="s3">'quiz_count'</span><span class="s1">: u.quiz_count,</span>
+            <span class="s3">'avg_score'</span><span class="s1">: u.avg_score,</span>
+            <span class="s3">'min_score'</span><span class="s1">: u.min_score,</span>
+            <span class="s3">'max_score'</span><span class="s1">: u.max_score,</span>
+            <span class="s3">'category_best'</span><span class="s1">: best_category</span>
+        <span class="s1">})</span>
+
+    <span class="s0"># روند پیشرفت هر کاربر در طول زمان</span>
+    <span class="s1">user_progress = db.session.query(</span>
+        <span class="s1">User.username,</span>
+        <span class="s1">QuizResult.date,</span>
+        <span class="s1">QuizResult.score</span>
+    <span class="s1">).join(QuizResult).order_by(User.username, QuizResult.date).all()</span>
+
+    <span class="s0"># === تحلیل سوالات ===</span>
+    <span class="s1">question_stats = {}</span>
+    <span class="s1">all_results = QuizResult.query.all()</span>
+    <span class="s2">for </span><span class="s1">result </span><span class="s2">in </span><span class="s1">all_results:</span>
+        <span class="s2">if </span><span class="s1">result.answers:  </span><span class="s0"># اگر پاسخ‌ها ذخیره شده باشند</span>
+            <span class="s1">answers = json.loads(result.answers)</span>
+            <span class="s2">for </span><span class="s1">question_id, answer </span><span class="s2">in </span><span class="s1">answers.items():</span>
+                <span class="s2">if </span><span class="s1">question_id </span><span class="s2">not in </span><span class="s1">question_stats:</span>
+                    <span class="s1">question_stats[question_id] = {</span><span class="s3">'total'</span><span class="s1">: </span><span class="s4">0</span><span class="s1">, </span><span class="s3">'correct'</span><span class="s1">: </span><span class="s4">0</span><span class="s1">}</span>
+                <span class="s1">question_stats[question_id][</span><span class="s3">'total'</span><span class="s1">] += </span><span class="s4">1</span>
+                <span class="s1">question = Question.query.get(int(question_id))</span>
+                <span class="s2">if </span><span class="s1">question </span><span class="s2">and </span><span class="s1">answer == question.correct_answer:</span>
+                    <span class="s1">question_stats[question_id][</span><span class="s3">'correct'</span><span class="s1">] += </span><span class="s4">1</span>
+
+    <span class="s0"># دیکشنری برای دسترسی آسان به سوالات</span>
+    <span class="s1">questions_dict = {q.id: q </span><span class="s2">for </span><span class="s1">q </span><span class="s2">in </span><span class="s1">Question.query.all()}</span>
+
+    <span class="s0"># === تحلیل دسته‌بندی‌ها ===</span>
+    <span class="s1">category_stats = db.session.query(</span>
+        <span class="s1">QuizResult.category,</span>
+        <span class="s1">db.func.count(QuizResult.id).label(</span><span class="s3">'total_attempts'</span><span class="s1">),</span>
+        <span class="s1">db.func.avg(QuizResult.score).label(</span><span class="s3">'avg_score'</span><span class="s1">),</span>
+        <span class="s1">db.func.min(QuizResult.score).label(</span><span class="s3">'min_score'</span><span class="s1">),</span>
+        <span class="s1">db.func.max(QuizResult.score).label(</span><span class="s3">'max_score'</span><span class="s1">)</span>
+    <span class="s1">).group_by(QuizResult.category).all()</span>
+
+    <span class="s0"># === تحلیل زمانی ===</span>
+    <span class="s1">time_stats = db.session.query(</span>
+        <span class="s1">db.func.date(QuizResult.date).label(</span><span class="s3">'date'</span><span class="s1">),</span>
+        <span class="s1">db.func.count(QuizResult.id).label(</span><span class="s3">'quiz_count'</span><span class="s1">),</span>
+        <span class="s1">db.func.avg(QuizResult.score).label(</span><span class="s3">'avg_score'</span><span class="s1">)</span>
+    <span class="s1">).group_by(</span>
+        <span class="s1">db.func.date(QuizResult.date)</span>
+    <span class="s1">).order_by(</span>
+        <span class="s1">db.func.date(QuizResult.date)</span>
+    <span class="s1">).all()</span>
+
+    <span class="s0"># === تحلیل سطح دشواری ===</span>
+    <span class="s1">difficulty_stats = {</span>
+        <span class="s3">'آسان'</span><span class="s1">: {</span><span class="s3">'count'</span><span class="s1">: </span><span class="s4">0</span><span class="s1">, </span><span class="s3">'avg_score'</span><span class="s1">: </span><span class="s4">0</span><span class="s1">},</span>
+        <span class="s3">'متوسط'</span><span class="s1">: {</span><span class="s3">'count'</span><span class="s1">: </span><span class="s4">0</span><span class="s1">, </span><span class="s3">'avg_score'</span><span class="s1">: </span><span class="s4">0</span><span class="s1">},</span>
+        <span class="s3">'سخت'</span><span class="s1">: {</span><span class="s3">'count'</span><span class="s1">: </span><span class="s4">0</span><span class="s1">, </span><span class="s3">'avg_score'</span><span class="s1">: </span><span class="s4">0</span><span class="s1">}</span>
+    <span class="s1">}</span>
+
+    <span class="s2">for </span><span class="s1">result </span><span class="s2">in </span><span class="s1">all_results:</span>
+        <span class="s2">if </span><span class="s1">result.score &gt;= </span><span class="s4">80</span><span class="s1">:</span>
+            <span class="s1">level = </span><span class="s3">'آسان'</span>
+        <span class="s2">elif </span><span class="s1">result.score &gt;= </span><span class="s4">60</span><span class="s1">:</span>
+            <span class="s1">level = </span><span class="s3">'متوسط'</span>
+        <span class="s2">else</span><span class="s1">:</span>
+            <span class="s1">level = </span><span class="s3">'سخت'</span>
+        <span class="s1">difficulty_stats[level][</span><span class="s3">'count'</span><span class="s1">] += </span><span class="s4">1</span>
+        <span class="s1">difficulty_stats[level][</span><span class="s3">'avg_score'</span><span class="s1">] = (</span>
+                                                       <span class="s1">difficulty_stats[level][</span><span class="s3">'avg_score'</span><span class="s1">] + result.score</span>
+                                               <span class="s1">) / </span><span class="s4">2 </span><span class="s2">if </span><span class="s1">difficulty_stats[level][</span><span class="s3">'avg_score'</span><span class="s1">] &gt; </span><span class="s4">0 </span><span class="s2">else </span><span class="s1">result.score</span>
+
+    <span class="s0"># === آماده‌سازی داده‌ها برای نمودارها ===</span>
+    <span class="s1">chart_data = {</span>
+        <span class="s0"># داده‌های روند زمانی</span>
+        <span class="s3">'time_labels'</span><span class="s1">: [str(stat.date) </span><span class="s2">for </span><span class="s1">stat </span><span class="s2">in </span><span class="s1">time_stats],</span>
+        <span class="s3">'time_counts'</span><span class="s1">: [stat.quiz_count </span><span class="s2">for </span><span class="s1">stat </span><span class="s2">in </span><span class="s1">time_stats],</span>
+        <span class="s3">'time_scores'</span><span class="s1">: [float(stat.avg_score) </span><span class="s2">for </span><span class="s1">stat </span><span class="s2">in </span><span class="s1">time_stats],</span>
+
+        <span class="s0"># داده‌های دسته‌بندی</span>
+        <span class="s3">'categories'</span><span class="s1">: [stat.category </span><span class="s2">for </span><span class="s1">stat </span><span class="s2">in </span><span class="s1">category_stats],</span>
+        <span class="s3">'category_counts'</span><span class="s1">: [stat.total_attempts </span><span class="s2">for </span><span class="s1">stat </span><span class="s2">in </span><span class="s1">category_stats],</span>
+        <span class="s3">'category_scores'</span><span class="s1">: [float(stat.avg_score) </span><span class="s2">for </span><span class="s1">stat </span><span class="s2">in </span><span class="s1">category_stats],</span>
+
+        <span class="s0"># داده‌های کاربران</span>
+        <span class="s3">'users'</span><span class="s1">: [user[</span><span class="s3">'username'</span><span class="s1">] </span><span class="s2">for </span><span class="s1">user </span><span class="s2">in </span><span class="s1">user_performance_list],</span>
+        <span class="s3">'user_counts'</span><span class="s1">: [user[</span><span class="s3">'quiz_count'</span><span class="s1">] </span><span class="s2">for </span><span class="s1">user </span><span class="s2">in </span><span class="s1">user_performance_list],</span>
+        <span class="s3">'user_scores'</span><span class="s1">: [float(user[</span><span class="s3">'avg_score'</span><span class="s1">]) </span><span class="s2">for </span><span class="s1">user </span><span class="s2">in </span><span class="s1">user_performance_list],</span>
+
+        <span class="s0"># داده‌های سطح دشواری</span>
+        <span class="s3">'difficulty_labels'</span><span class="s1">: list(difficulty_stats.keys()),</span>
+        <span class="s3">'difficulty_counts'</span><span class="s1">: [stats[</span><span class="s3">'count'</span><span class="s1">] </span><span class="s2">for </span><span class="s1">stats </span><span class="s2">in </span><span class="s1">difficulty_stats.values()],</span>
+        <span class="s3">'difficulty_scores'</span><span class="s1">: [stats[</span><span class="s3">'avg_score'</span><span class="s1">] </span><span class="s2">for </span><span class="s1">stats </span><span class="s2">in </span><span class="s1">difficulty_stats.values()],</span>
+
+        <span class="s0"># داده‌های پیشرفت کاربران</span>
+        <span class="s3">'progress_data'</span><span class="s1">: {}</span>
+    <span class="s1">}</span>
+
+    <span class="s0"># پردازش داده‌های پیشرفت کاربر با استفاده از itertools.groupby</span>
+    <span class="s2">for </span><span class="s1">username, group </span><span class="s2">in </span><span class="s1">itertools.groupby(user_progress, </span><span class="s2">lambda </span><span class="s1">x: x[</span><span class="s4">0</span><span class="s1">]):</span>
+        <span class="s1">chart_data[</span><span class="s3">'progress_data'</span><span class="s1">][username] = {</span>
+            <span class="s3">'dates'</span><span class="s1">: [],</span>
+            <span class="s3">'scores'</span><span class="s1">: []</span>
+        <span class="s1">}</span>
+        <span class="s2">for </span><span class="s1">_, date, score </span><span class="s2">in </span><span class="s1">group:</span>
+            <span class="s1">chart_data[</span><span class="s3">'progress_data'</span><span class="s1">][username][</span><span class="s3">'dates'</span><span class="s1">].append(str(date.date()))</span>
+            <span class="s1">chart_data[</span><span class="s3">'progress_data'</span><span class="s1">][username][</span><span class="s3">'scores'</span><span class="s1">].append(float(score))</span>
+
+    <span class="s2">return </span><span class="s1">render_template(</span><span class="s3">'admin/analytics.html'</span><span class="s1">,</span>
+                           <span class="s1">total_users=total_users,</span>
+                           <span class="s1">total_quizzes=total_quizzes,</span>
+                           <span class="s1">total_questions=total_questions,</span>
+                           <span class="s1">avg_total_score=round(avg_total_score, </span><span class="s4">2</span><span class="s1">),</span>
+                           <span class="s1">user_performance=user_performance_list,</span>
+                           <span class="s1">category_stats=category_stats,</span>
+                           <span class="s1">question_stats=question_stats,</span>
+                           <span class="s1">questions_dict=questions_dict,</span>
+                           <span class="s1">chart_data=chart_data)</span>
+
+
+<span class="s1">@app.route(</span><span class="s3">'/import_questions'</span><span class="s1">, methods=[</span><span class="s3">'POST'</span><span class="s1">])</span>
+<span class="s1">@login_required</span>
+<span class="s2">def </span><span class="s1">import_questions():</span>
+    <span class="s0">&quot;&quot;&quot;دریافت سوالات از API خارجی - فقط برای ادمین&quot;&quot;&quot;</span>
+    <span class="s2">try</span><span class="s1">:</span>
+        <span class="s0"># بررسی دسترسی ادمین</span>
+        <span class="s1">user = User.query.get(session[</span><span class="s3">'user_id'</span><span class="s1">])</span>
+        <span class="s2">if not </span><span class="s1">user </span><span class="s2">or </span><span class="s1">user.username != </span><span class="s3">'admin'</span><span class="s1">:</span>
+            <span class="s2">return </span><span class="s1">jsonify({</span><span class="s3">'error'</span><span class="s1">: </span><span class="s3">'دسترسی غیرمجاز'</span><span class="s1">}), </span><span class="s4">403</span>
+
+        <span class="s1">print(</span><span class="s3">&quot;Starting to import questions...&quot;</span><span class="s1">)</span>
+
+        <span class="s0"># دریافت سوالات از API خارجی با تایم‌اوت مناسب</span>
+        <span class="s2">try</span><span class="s1">:</span>
+            <span class="s1">response = requests.get(</span>
+                <span class="s3">'https://opentdb.com/api.php'</span><span class="s1">,</span>
+                <span class="s1">params={</span>
+                    <span class="s3">'amount'</span><span class="s1">: </span><span class="s4">10</span><span class="s1">,</span>
+                    <span class="s3">'type'</span><span class="s1">: </span><span class="s3">'multiple'</span>
+                <span class="s1">},</span>
+                <span class="s1">timeout=</span><span class="s4">10  </span><span class="s0"># تنظیم تایم‌اوت برای جلوگیری از انتظار طولانی</span>
+            <span class="s1">)</span>
+            <span class="s1">print(</span><span class="s3">f&quot;API Response status: </span><span class="s5">{</span><span class="s1">response.status_code</span><span class="s5">}</span><span class="s3">&quot;</span><span class="s1">)</span>
+
+            <span class="s2">if </span><span class="s1">response.status_code != </span><span class="s4">200</span><span class="s1">:</span>
+                <span class="s2">return </span><span class="s1">jsonify({</span><span class="s3">'error'</span><span class="s1">: </span><span class="s3">f'خطا در دریافت از API: کد </span><span class="s5">{</span><span class="s1">response.status_code</span><span class="s5">}</span><span class="s3">'</span><span class="s1">}), </span><span class="s4">400</span>
+
+        <span class="s2">except </span><span class="s1">requests.exceptions.RequestException </span><span class="s2">as </span><span class="s1">e:</span>
+            <span class="s1">print(</span><span class="s3">f&quot;Request error: </span><span class="s5">{</span><span class="s1">str(e)</span><span class="s5">}</span><span class="s3">&quot;</span><span class="s1">)</span>
+            <span class="s2">return </span><span class="s1">jsonify({</span><span class="s3">'error'</span><span class="s1">: </span><span class="s3">f'خطا در ارتباط با API خارجی: </span><span class="s5">{</span><span class="s1">str(e)</span><span class="s5">}</span><span class="s3">'</span><span class="s1">}), </span><span class="s4">500</span>
+
+        <span class="s0"># پردازش پاسخ API</span>
+        <span class="s2">try</span><span class="s1">:</span>
+            <span class="s1">data = response.json()</span>
+            <span class="s1">print(</span><span class="s3">f&quot;API Response data: </span><span class="s5">{</span><span class="s1">data</span><span class="s5">}</span><span class="s3">&quot;</span><span class="s1">)</span>
+
+            <span class="s2">if </span><span class="s3">'response_code' </span><span class="s2">not in </span><span class="s1">data </span><span class="s2">or </span><span class="s1">data[</span><span class="s3">'response_code'</span><span class="s1">] != </span><span class="s4">0</span><span class="s1">:</span>
+                <span class="s2">return </span><span class="s1">jsonify({</span>
+                    <span class="s3">'error'</span><span class="s1">: </span><span class="s3">f'خطا در پاسخ API (کد </span><span class="s5">{</span><span class="s1">data.get(</span><span class="s3">&quot;response_code&quot;</span><span class="s1">, </span><span class="s3">&quot;نامشخص&quot;</span><span class="s1">)</span><span class="s5">}</span><span class="s3">)'</span>
+                <span class="s1">}), </span><span class="s4">400</span>
+
+            <span class="s2">if </span><span class="s3">'results' </span><span class="s2">not in </span><span class="s1">data </span><span class="s2">or not </span><span class="s1">data[</span><span class="s3">'results'</span><span class="s1">]:</span>
+                <span class="s2">return </span><span class="s1">jsonify({</span><span class="s3">'error'</span><span class="s1">: </span><span class="s3">'هیچ سوالی از API دریافت نشد'</span><span class="s1">}), </span><span class="s4">400</span>
+
+        <span class="s2">except </span><span class="s1">ValueError </span><span class="s2">as </span><span class="s1">e:</span>
+            <span class="s1">print(</span><span class="s3">f&quot;JSON parsing error: </span><span class="s5">{</span><span class="s1">str(e)</span><span class="s5">}</span><span class="s3">&quot;</span><span class="s1">)</span>
+            <span class="s2">return </span><span class="s1">jsonify({</span><span class="s3">'error'</span><span class="s1">: </span><span class="s3">'خطا در پردازش پاسخ API'</span><span class="s1">}), </span><span class="s4">500</span>
+
+        <span class="s0"># اضافه کردن سوالات به دیتابیس</span>
+        <span class="s1">questions_added = </span><span class="s4">0</span>
+        <span class="s2">try</span><span class="s1">:</span>
+            <span class="s2">for </span><span class="s1">q </span><span class="s2">in </span><span class="s1">data[</span><span class="s3">'results'</span><span class="s1">]:</span>
+                <span class="s0"># اطمینان از وجود تمام فیلدهای مورد نیاز</span>
+                <span class="s2">if </span><span class="s1">all(key </span><span class="s2">in </span><span class="s1">q </span><span class="s2">for </span><span class="s1">key </span><span class="s2">in </span><span class="s1">[</span><span class="s3">'category'</span><span class="s1">, </span><span class="s3">'question'</span><span class="s1">, </span><span class="s3">'correct_answer'</span><span class="s1">, </span><span class="s3">'incorrect_answers'</span><span class="s1">]):</span>
+                    <span class="s0"># پاکسازی و آماده‌سازی داده‌ها</span>
+                    <span class="s1">category = q[</span><span class="s3">'category'</span><span class="s1">]</span>
+                    <span class="s1">question_text = q[</span><span class="s3">'question'</span><span class="s1">]</span>
+                    <span class="s1">correct_answer = q[</span><span class="s3">'correct_answer'</span><span class="s1">]</span>
+                    <span class="s1">wrong_answers = json.dumps(q[</span><span class="s3">'incorrect_answers'</span><span class="s1">])</span>
+
+                    <span class="s0"># ایجاد و ذخیره سوال</span>
+                    <span class="s1">question = Question(</span>
+                        <span class="s1">category=category,</span>
+                        <span class="s1">question_text=question_text,</span>
+                        <span class="s1">correct_answer=correct_answer,</span>
+                        <span class="s1">wrong_answers=wrong_answers</span>
+                    <span class="s1">)</span>
+                    <span class="s1">db.session.add(question)</span>
+                    <span class="s1">questions_added += </span><span class="s4">1</span>
+                <span class="s2">else</span><span class="s1">:</span>
+                    <span class="s1">print(</span><span class="s3">f&quot;Skipping question due to missing fields: </span><span class="s5">{</span><span class="s1">q</span><span class="s5">}</span><span class="s3">&quot;</span><span class="s1">)</span>
+
+            <span class="s2">if </span><span class="s1">questions_added &gt; </span><span class="s4">0</span><span class="s1">:</span>
+                <span class="s1">db.session.commit()</span>
+                <span class="s1">print(</span><span class="s3">f&quot;Successfully added </span><span class="s5">{</span><span class="s1">questions_added</span><span class="s5">} </span><span class="s3">questions&quot;</span><span class="s1">)</span>
+                <span class="s2">return </span><span class="s1">jsonify({</span>
+                    <span class="s3">'success'</span><span class="s1">: </span><span class="s2">True</span><span class="s1">,</span>
+                    <span class="s3">'message'</span><span class="s1">: </span><span class="s3">f'</span><span class="s5">{</span><span class="s1">questions_added</span><span class="s5">} </span><span class="s3">سوال با موفقیت اضافه شد'</span>
+                <span class="s1">})</span>
+            <span class="s2">else</span><span class="s1">:</span>
+                <span class="s2">return </span><span class="s1">jsonify({</span><span class="s3">'error'</span><span class="s1">: </span><span class="s3">'هیچ سوالی اضافه نشد'</span><span class="s1">}), </span><span class="s4">400</span>
+
+        <span class="s2">except </span><span class="s1">Exception </span><span class="s2">as </span><span class="s1">e:</span>
+            <span class="s1">db.session.rollback()</span>
+            <span class="s1">print(</span><span class="s3">f&quot;Database error: </span><span class="s5">{</span><span class="s1">str(e)</span><span class="s5">}</span><span class="s3">&quot;</span><span class="s1">)</span>
+            <span class="s2">return </span><span class="s1">jsonify({</span><span class="s3">'error'</span><span class="s1">: </span><span class="s3">f'خطا در ذخیره سوالات: </span><span class="s5">{</span><span class="s1">str(e)</span><span class="s5">}</span><span class="s3">'</span><span class="s1">}), </span><span class="s4">500</span>
+
+    <span class="s2">except </span><span class="s1">Exception </span><span class="s2">as </span><span class="s1">e:</span>
+        <span class="s1">print(</span><span class="s3">f&quot;Unexpected error in import_questions: </span><span class="s5">{</span><span class="s1">str(e)</span><span class="s5">}</span><span class="s3">&quot;</span><span class="s1">)</span>
+        <span class="s2">return </span><span class="s1">jsonify({</span><span class="s3">'error'</span><span class="s1">: </span><span class="s3">f'خطای سیستمی: </span><span class="s5">{</span><span class="s1">str(e)</span><span class="s5">}</span><span class="s3">'</span><span class="s1">}), </span><span class="s4">500</span>
+
+
+<span class="s1">@app.route(</span><span class="s3">'/quiz/&lt;category&gt;'</span><span class="s1">)</span>
+<span class="s1">@login_required</span>
+<span class="s2">def </span><span class="s1">quiz(category):</span>
+    <span class="s0">&quot;&quot;&quot;نمایش کوییز برای یک دسته‌بندی خاص&quot;&quot;&quot;</span>
+    <span class="s0"># دریافت 10 سوال تصادفی از دسته‌بندی انتخاب شده</span>
+    <span class="s1">questions = Question.query.filter_by(category=category).limit(</span><span class="s4">10</span><span class="s1">).all()</span>
+    <span class="s2">if not </span><span class="s1">questions:</span>
+        <span class="s1">flash(</span><span class="s3">'سوالی در این دسته‌بندی وجود ندارد'</span><span class="s1">)</span>
+        <span class="s2">return </span><span class="s1">redirect(url_for(</span><span class="s3">'index'</span><span class="s1">))</span>
+
+    <span class="s0"># تبدیل سوالات به فرمت مناسب برای نمایش</span>
+    <span class="s1">quiz_questions = []</span>
+    <span class="s2">for </span><span class="s1">q </span><span class="s2">in </span><span class="s1">questions:</span>
+        <span class="s1">wrong_answers = json.loads(q.wrong_answers)</span>
+        <span class="s1">options = wrong_answers + [q.correct_answer]</span>
+        <span class="s0"># مخلوط کردن گزینه‌ها</span>
+        <span class="s2">from </span><span class="s1">random </span><span class="s2">import </span><span class="s1">shuffle</span>
+        <span class="s1">shuffle(options)</span>
+
+        <span class="s1">quiz_questions.append({</span>
+            <span class="s3">'id'</span><span class="s1">: q.id,</span>
+            <span class="s3">'question'</span><span class="s1">: q.question_text,</span>
+            <span class="s3">'options'</span><span class="s1">: options,</span>
+            <span class="s3">'correct_answer'</span><span class="s1">: q.correct_answer</span>
+        <span class="s1">})</span>
+
+    <span class="s2">return </span><span class="s1">render_template(</span><span class="s3">'quiz.html'</span><span class="s1">,</span>
+                           <span class="s1">questions=quiz_questions,</span>
+                           <span class="s1">category=category)</span>
+
+
+<span class="s1">@app.route(</span><span class="s3">'/submit_quiz'</span><span class="s1">, methods=[</span><span class="s3">'POST'</span><span class="s1">])</span>
+<span class="s1">@login_required</span>
+<span class="s2">def </span><span class="s1">submit_quiz():</span>
+    <span class="s0">&quot;&quot;&quot;ثبت نتیجه کوییز&quot;&quot;&quot;</span>
+    <span class="s2">try</span><span class="s1">:</span>
+        <span class="s1">data = request.get_json()</span>
+        <span class="s2">if not </span><span class="s1">data:</span>
+            <span class="s2">return </span><span class="s1">jsonify({</span><span class="s3">'error'</span><span class="s1">: </span><span class="s3">'داده‌ای دریافت نشد'</span><span class="s1">}), </span><span class="s4">400</span>
+
+        <span class="s1">print(</span><span class="s3">&quot;Received data:&quot;</span><span class="s1">, data)  </span><span class="s0"># اضافه کردن لاگ برای دیباگ</span>
+
+        <span class="s1">category = data.get(</span><span class="s3">'category'</span><span class="s1">)</span>
+        <span class="s1">time_taken = data.get(</span><span class="s3">'time_taken'</span><span class="s1">)</span>
+        <span class="s1">answers = data.get(</span><span class="s3">'answers'</span><span class="s1">, {})</span>
+
+        <span class="s0"># اعتبارسنجی داده‌های ورودی</span>
+        <span class="s2">if not </span><span class="s1">category:</span>
+            <span class="s2">return </span><span class="s1">jsonify({</span><span class="s3">'error'</span><span class="s1">: </span><span class="s3">'دسته‌بندی مشخص نشده است'</span><span class="s1">}), </span><span class="s4">400</span>
+        <span class="s2">if not </span><span class="s1">time_taken:</span>
+            <span class="s2">return </span><span class="s1">jsonify({</span><span class="s3">'error'</span><span class="s1">: </span><span class="s3">'زمان صرف شده مشخص نشده است'</span><span class="s1">}), </span><span class="s4">400</span>
+        <span class="s2">if not </span><span class="s1">answers:</span>
+            <span class="s2">return </span><span class="s1">jsonify({</span><span class="s3">'error'</span><span class="s1">: </span><span class="s3">'هیچ پاسخی ارسال نشده است'</span><span class="s1">}), </span><span class="s4">400</span>
+
+        <span class="s0"># محاسبه امتیاز</span>
+        <span class="s1">correct_count = </span><span class="s4">0</span>
+        <span class="s1">total_questions = len(answers)</span>
+
+        <span class="s2">for </span><span class="s1">question_id, answer </span><span class="s2">in </span><span class="s1">answers.items():</span>
+            <span class="s2">try</span><span class="s1">:</span>
+                <span class="s1">question = Question.query.get(int(question_id))</span>
+                <span class="s2">if </span><span class="s1">question </span><span class="s2">and </span><span class="s1">question.correct_answer == answer:</span>
+                    <span class="s1">correct_count += </span><span class="s4">1</span>
+            <span class="s2">except </span><span class="s1">Exception </span><span class="s2">as </span><span class="s1">e:</span>
+                <span class="s1">print(</span><span class="s3">f&quot;Error checking answer for question </span><span class="s5">{</span><span class="s1">question_id</span><span class="s5">}</span><span class="s3">: </span><span class="s5">{</span><span class="s1">str(e)</span><span class="s5">}</span><span class="s3">&quot;</span><span class="s1">)</span>
+
+        <span class="s1">score = int((correct_count / total_questions) * </span><span class="s4">100</span><span class="s1">) </span><span class="s2">if </span><span class="s1">total_questions &gt; </span><span class="s4">0 </span><span class="s2">else </span><span class="s4">0</span>
+        <span class="s1">print(</span><span class="s3">f&quot;Calculated score: </span><span class="s5">{</span><span class="s1">score</span><span class="s5">}</span><span class="s3">% (</span><span class="s5">{</span><span class="s1">correct_count</span><span class="s5">}</span><span class="s3">/</span><span class="s5">{</span><span class="s1">total_questions</span><span class="s5">}</span><span class="s3">)&quot;</span><span class="s1">)</span>
+
+        <span class="s0"># ذخیره نتیجه کوییز</span>
+        <span class="s2">try</span><span class="s1">:</span>
+            <span class="s1">result = QuizResult(</span>
+                <span class="s1">user_id=session[</span><span class="s3">'user_id'</span><span class="s1">],</span>
+                <span class="s1">category=category,</span>
+                <span class="s1">score=score,</span>
+                <span class="s1">time_taken=time_taken,</span>
+                <span class="s1">answers=json.dumps(answers)</span>
+            <span class="s1">)</span>
+
+            <span class="s1">db.session.add(result)</span>
+            <span class="s1">db.session.commit()</span>
+            <span class="s1">print(</span><span class="s3">&quot;Quiz result saved successfully&quot;</span><span class="s1">)</span>
+        <span class="s2">except </span><span class="s1">Exception </span><span class="s2">as </span><span class="s1">e:</span>
+            <span class="s1">db.session.rollback()</span>
+            <span class="s1">print(</span><span class="s3">f&quot;Error saving quiz result: </span><span class="s5">{</span><span class="s1">str(e)</span><span class="s5">}</span><span class="s3">&quot;</span><span class="s1">)</span>
+            <span class="s2">return </span><span class="s1">jsonify({</span><span class="s3">'error'</span><span class="s1">: </span><span class="s3">f'خطا در ذخیره نتیجه: </span><span class="s5">{</span><span class="s1">str(e)</span><span class="s5">}</span><span class="s3">'</span><span class="s1">}), </span><span class="s4">500</span>
+
+        <span class="s2">return </span><span class="s1">jsonify({</span>
+            <span class="s3">'success'</span><span class="s1">: </span><span class="s2">True</span><span class="s1">,</span>
+            <span class="s3">'message'</span><span class="s1">: </span><span class="s3">'نتیجه با موفقیت ثبت شد'</span><span class="s1">,</span>
+            <span class="s3">'score'</span><span class="s1">: score,</span>
+            <span class="s3">'correct_count'</span><span class="s1">: correct_count,</span>
+            <span class="s3">'total_questions'</span><span class="s1">: total_questions</span>
+        <span class="s1">})</span>
+
+    <span class="s2">except </span><span class="s1">Exception </span><span class="s2">as </span><span class="s1">e:</span>
+        <span class="s1">print(</span><span class="s3">f&quot;Unexpected error in submit_quiz: </span><span class="s5">{</span><span class="s1">str(e)</span><span class="s5">}</span><span class="s3">&quot;</span><span class="s1">)</span>
+        <span class="s2">return </span><span class="s1">jsonify({</span><span class="s3">'error'</span><span class="s1">: </span><span class="s3">f'خطای سیستمی: </span><span class="s5">{</span><span class="s1">str(e)</span><span class="s5">}</span><span class="s3">'</span><span class="s1">}), </span><span class="s4">500</span>
+
+
+<span class="s1">@app.route(</span><span class="s3">'/profile'</span><span class="s1">)</span>
+<span class="s1">@login_required</span>
+<span class="s2">def </span><span class="s1">profile():</span>
+    <span class="s0">&quot;&quot;&quot;نمایش پروفایل کاربر و نتایج کوییزها&quot;&quot;&quot;</span>
+    <span class="s1">user = User.query.get(session[</span><span class="s3">'user_id'</span><span class="s1">])</span>
+
+    <span class="s0"># ساده‌سازی کوئری برای اجتناب از خطا</span>
+    <span class="s1">results = QuizResult.query.filter_by(user_id=session[</span><span class="s3">'user_id'</span><span class="s1">]).order_by(QuizResult.date.desc()).all()</span>
+
+    <span class="s0"># محاسبه آمارهای کاربر</span>
+    <span class="s1">total_quizzes = len(results)</span>
+    <span class="s1">avg_score = sum(r.score </span><span class="s2">for </span><span class="s1">r </span><span class="s2">in </span><span class="s1">results) / total_quizzes </span><span class="s2">if </span><span class="s1">total_quizzes &gt; </span><span class="s4">0 </span><span class="s2">else </span><span class="s4">0</span>
+
+    <span class="s0"># آمار به تفکیک دسته‌بندی</span>
+    <span class="s1">category_stats = {}</span>
+    <span class="s2">for </span><span class="s1">result </span><span class="s2">in </span><span class="s1">results:</span>
+        <span class="s2">if </span><span class="s1">result.category </span><span class="s2">not in </span><span class="s1">category_stats:</span>
+            <span class="s1">category_stats[result.category] = {</span>
+                <span class="s3">'count'</span><span class="s1">: </span><span class="s4">0</span><span class="s1">,</span>
+                <span class="s3">'total_score'</span><span class="s1">: </span><span class="s4">0</span>
+            <span class="s1">}</span>
+        <span class="s1">category_stats[result.category][</span><span class="s3">'count'</span><span class="s1">] += </span><span class="s4">1</span>
+        <span class="s1">category_stats[result.category][</span><span class="s3">'total_score'</span><span class="s1">] += result.score</span>
+
+    <span class="s2">for </span><span class="s1">stats </span><span class="s2">in </span><span class="s1">category_stats.values():</span>
+        <span class="s1">stats[</span><span class="s3">'avg_score'</span><span class="s1">] = stats[</span><span class="s3">'total_score'</span><span class="s1">] / stats[</span><span class="s3">'count'</span><span class="s1">]</span>
+
+    <span class="s0"># پردازش داده‌های نمودار - آماده‌سازی تاریخ‌ها و نمرات برای نمودار</span>
+    <span class="s1">chart_labels = []</span>
+    <span class="s1">chart_scores = []</span>
+
+    <span class="s2">for </span><span class="s1">result </span><span class="s2">in </span><span class="s1">reversed(results):</span>
+        <span class="s2">if </span><span class="s1">hasattr(result, </span><span class="s3">'date'</span><span class="s1">) </span><span class="s2">and </span><span class="s1">result.date:</span>
+            <span class="s2">try</span><span class="s1">:</span>
+                <span class="s1">chart_labels.append(result.date.strftime(</span><span class="s3">'%Y/%m/%d'</span><span class="s1">))</span>
+                <span class="s1">chart_scores.append(result.score)</span>
+            <span class="s2">except </span><span class="s1">Exception </span><span class="s2">as </span><span class="s1">e:</span>
+                <span class="s1">print(</span><span class="s3">f&quot;Error formatting date: </span><span class="s5">{</span><span class="s1">e</span><span class="s5">}</span><span class="s3">&quot;</span><span class="s1">)</span>
+
+    <span class="s2">return </span><span class="s1">render_template(</span><span class="s3">'profile.html'</span><span class="s1">,</span>
+                           <span class="s1">user=user,</span>
+                           <span class="s1">results=results,</span>
+                           <span class="s1">total_quizzes=total_quizzes,</span>
+                           <span class="s1">avg_score=round(avg_score, </span><span class="s4">2</span><span class="s1">),</span>
+                           <span class="s1">category_stats=category_stats,</span>
+                           <span class="s1">chart_labels=chart_labels,</span>
+                           <span class="s1">chart_scores=chart_scores)</span>
+
+
+<span class="s2">if </span><span class="s1">__name__ == </span><span class="s3">'__main__'</span><span class="s1">:</span>
+    <span class="s2">with </span><span class="s1">app.app_context():</span>
+        <span class="s0"># ایجاد جداول دیتابیس در صورت عدم وجود</span>
+        <span class="s1">db.create_all()</span>
+    <span class="s1">app.run(debug=</span><span class="s2">True</span><span class="s1">)</span></pre>
+</body>
+</html>

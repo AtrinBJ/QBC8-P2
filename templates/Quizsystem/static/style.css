@@ -1,0 +1,118 @@
+/* تنظیمات پس‌زمینه و رنگ‌های اصلی */
+:root {
+    --primary-color: #0d6efd;
+    --text-light: #ffffff;
+    --text-dark: #1a1a1a;
+    --background-overlay: rgba(0, 0, 0, 0.75);  /* لایه تیره روی پس‌زمینه */
+}
+
+body {
+    font-family: 'Vazir', sans-serif;
+    /* ایجاد گرادیان تیره روی تصویر پس‌زمینه */
+    background: linear-gradient(
+        var(--background-overlay),
+        var(--background-overlay)
+    ), url('../images/background.jpg');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    color: var(--text-light);  /* رنگ متن‌ها سفید */
+    min-height: 100vh;  /* حداقل ارتفاع برابر با ارتفاع صفحه */
+    direction: rtl;
+}
+
+/* استایل کارت‌ها برای خوانایی بهتر */
+.card {
+    background-color: rgba(255, 255, 255, 0.1);  /* پس‌زمینه نیمه‌شفاف */
+    backdrop-filter: blur(10px);  /* محو کردن پس‌زمینه */
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--text-light);
+}
+
+.card-title {
+    color: var(--primary-color);
+}
+
+/* استایل فرم‌ها */
+.form-control {
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--text-light);
+}
+
+.form-control:focus {
+    background-color: rgba(255, 255, 255, 0.15);
+    color: var(--text-light);
+    border-color: var(--primary-color);
+}
+
+/* تغییر رنگ لیبل‌ها */
+label {
+    color: var(--text-light);
+}
+
+/* استایل جداول */
+.table {
+    color: var(--text-light);
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.table th {
+    background-color: rgba(0, 0, 0, 0.3);
+}
+
+/* استایل دکمه‌ها */
+.btn-primary {
+    background-color: var(--primary-color);
+    border: none;
+}
+
+.btn-primary:hover {
+    background-color: #0b5ed7;
+    transform: translateY(-2px);
+}
+
+/* استایل پیام‌های فلش */
+.alert {
+    background-color: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: var(--text-light);
+}
+
+/* منوی ناوبری */
+.navbar {
+    background-color: rgba(0, 0, 0, 0.5) !important;
+    backdrop-filter: blur(10px);
+}
+
+.navbar-brand, .nav-link {
+    color: var(--text-light) !important;
+}
+
+/* تنظیمات Placeholder */
+::placeholder {
+    color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* استایل برای حالت انتخاب متن */
+::selection {
+    background-color: var(--primary-color);
+    color: var(--text-light);
+}
+
+/* انیمیشن‌ها */
+.fade-in {
+    animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
