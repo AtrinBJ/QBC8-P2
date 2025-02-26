@@ -1,0 +1,52 @@
+<!-- templates/login.html -->
+{% extends "base.html" %}
+
+{% block title %}ورود به سیستم{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h3 class="card-title text-center mb-4">ورود به سیستم</h3>
+
+                <form method="POST" action="{{ url_for('login') }}">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">نام کاربری</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-transparent border-end-0">
+                                <i class="bi bi-person"></i>
+                            </span>
+                            <input type="text" class="form-control border-start-0" id="username" name="username" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="password" class="form-label">رمز عبور</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-transparent border-end-0">
+                                <i class="bi bi-key"></i>
+                            </span>
+                            <input type="password" class="form-control border-start-0" id="password" name="password" required>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-box-arrow-in-right me-2"></i>
+                            ورود
+                        </button>
+                    </div>
+                </form>
+
+                <div class="text-center mt-4">
+                    <p class="mb-0">
+                        حساب کاربری ندارید؟
+                        <a href="{{ url_for('register') }}" class="text-primary">ثبت نام کنید</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

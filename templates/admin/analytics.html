@@ -1,0 +1,579 @@
+{% extends "base.html" %}
+
+{% block title %}آنالیز سیستم کوییز{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="mb-4">
+        <i class="bi bi-bar-chart-fill me-2"></i>
+        تحلیل‌ها و آمار سیستم
+    </h2>
+
+    <!-- شاخص‌های کلیدی عملکرد (KPIs) -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="bi bi-people-fill display-4 mb-2"></i>
+                    <h5 class="card-title">تعداد کاربران</h5>
+                    <h3>{{ total_users }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="bi bi-card-checklist display-4 mb-2"></i>
+                    <h5 class="card-title">تعداد کوییزها</h5>
+                    <h3>{{ total_quizzes }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="bi bi-lightbulb-fill display-4 mb-2"></i>
+                    <h5 class="card-title">تعداد سوالات</h5>
+                    <h3>{{ total_questions }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="bi bi-trophy-fill display-4 mb-2"></i>
+                    <h5 class="card-title">میانگین نمرات</h5>
+                    <h3>{{ avg_total_score }}%</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- بخش نمودارها -->
+    <div class="row mb-4">
+        <!-- تحلیل زمانی -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">روند زمانی</h5>
+                    <canvas id="timeChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- تحلیل دسته‌بندی‌ها -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">عملکرد دسته‌بندی‌ها</h5>
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- تحلیل کاربران -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">عملکرد کاربران</h5>
+                    <canvas id="userPerformanceChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- تحلیل سطح دشواری -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">سطوح دشواری</h5>
+                    <canvas id="difficultyChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- تحلیل عملکرد کاربران -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">عملکرد کاربران</h5>
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>نام کاربری</th>
+                            <th>تعداد کوییز‌ها</th>
+                            <th>میانگین نمره</th>
+                            <th>پایین‌ترین نمره</th>
+                            <th>بالاترین نمره</th>
+                            <th>بهترین دسته‌بندی</th>
+                            <th>وضعیت</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in user_performance %}
+                        <tr>
+                            <td>{{ user.username }}</td>
+                            <td>{{ user.quiz_count }}</td>
+                            <td>{{ "%.1f"|format(user.avg_score) }}%</td>
+                            <td>{{ user.min_score }}%</td>
+                            <td>{{ user.max_score }}%</td>
+                            <td>{{ user.category_best }}</td>
+                            <td>
+                                {% if user.avg_score >= 80 %}
+                                    <span class="badge bg-success">عالی</span>
+                                {% elif user.avg_score >= 60 %}
+                                    <span class="badge bg-warning">خوب</span>
+                                {% else %}
+                                    <span class="badge bg-danger">نیاز به تلاش بیشتر</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- تحلیل دسته‌بندی‌ها -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">آمار دسته‌بندی‌ها</h5>
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>دسته‌بندی</th>
+                            <th>تعداد شرکت‌کنندگان</th>
+                            <th>میانگین نمره</th>
+                            <th>پایین‌ترین نمره</th>
+                            <th>بالاترین نمره</th>
+                            <th>وضعیت</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for stat in category_stats %}
+                        <tr>
+                            <td>{{ stat.category }}</td>
+                            <td>{{ stat.total_attempts }}</td>
+                            <td>{{ "%.1f"|format(stat.avg_score) }}%</td>
+                            <td>{{ "%.1f"|format(stat.min_score) }}%</td>
+                            <td>{{ "%.1f"|format(stat.max_score) }}%</td>
+                            <td>
+                                {% if stat.avg_score >= 80 %}
+                                    <span class="badge bg-success">آسان</span>
+                                {% elif stat.avg_score >= 60 %}
+                                    <span class="badge bg-warning">متوسط</span>
+                                {% else %}
+                                    <span class="badge bg-danger">سخت</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- تحلیل سوالات پرخطا -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">سوالات با بیشترین خطا</h5>
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>سوال</th>
+                            <th>دسته‌بندی</th>
+                            <th>تعداد پاسخ</th>
+                            <th>نرخ موفقیت</th>
+                            <th>وضعیت</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for id, stats in question_stats.items() %}
+                        {% if stats.total > 0 %}
+                        {% set question = questions_dict.get(id|int) %}
+                        {% if question %}
+                        <tr>
+                            <td>{{ question.question_text }}</td>
+                            <td>{{ question.category }}</td>
+                            <td>{{ stats.total }}</td>
+                            <td>{{ (stats.correct / stats.total * 100)|round(1) }}%</td>
+                            <td>
+                                {% if (stats.correct / stats.total * 100) < 30 %}
+                                    <span class="badge bg-danger">بسیار سخت</span>
+                                {% elif (stats.correct / stats.total * 100) < 50 %}
+                                    <span class="badge bg-warning">سخت</span>
+                                {% elif (stats.correct / stats.total * 100) < 70 %}
+                                    <span class="badge bg-info">متوسط</span>
+                                {% else %}
+                                    <span class="badge bg-success">ساده</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endif %}
+                        {% endif %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- رتبه‌بندی کاربران -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">رتبه‌بندی کاربران</h5>
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>رتبه</th>
+                            <th>نام کاربری</th>
+                            <th>تعداد کوییز</th>
+                            <th>میانگین نمره</th>
+                            <th>بهترین دسته‌بندی</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in user_performance|sort(attribute='avg_score', reverse=True) %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td>{{ user.username }}</td>
+                            <td>{{ user.quiz_count }}</td>
+                            <td>{{ "%.1f"|format(user.avg_score) }}%</td>
+                            <td>{{ user.category_best }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- پیشرفت کاربران -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">روند پیشرفت کاربران</h5>
+            <select id="userSelector" class="form-select mb-3">
+                <option value="">انتخاب کاربر...</option>
+                {% for username in chart_data.progress_data %}
+                <option value="{{ username }}">{{ username }}</option>
+                {% endfor %}
+            </select>
+            <canvas id="userProgressChart"></canvas>
+        </div>
+    </div>
+
+    <!-- بخش دیباگ -->
+    <div class="card mt-4">
+        <div class="card-body">
+            <h5 class="card-title">اطلاعات دیباگ</h5>
+            <p>تعداد کاربران: {{ total_users }}</p>
+            <p>تعداد کوییزها: {{ total_quizzes }}</p>
+            <p>داده‌های نمودار زمانی: {{ chart_data.time_labels|length }} نقطه</p>
+            <p>داده‌های کاربران: {{ chart_data.users|length }} کاربر</p>
+            <p>داده‌های دسته‌بندی: {{ chart_data.categories|length }} دسته‌بندی</p>
+            <pre>{{ chart_data|tojson(indent=2) }}</pre>
+        </div>
+    </div>
+</div>
+
+<!-- اسکریپت نمودارها -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("DOM loaded for analytics page");
+
+    // رنگ‌های سفارشی برای نمودارها
+    const colors = {
+        blue: 'rgba(54, 162, 235, 0.7)',
+        green: 'rgba(75, 192, 192, 0.7)',
+        red: 'rgba(255, 99, 132, 0.7)',
+        orange: 'rgba(255, 159, 64, 0.7)',
+        purple: 'rgba(153, 102, 255, 0.7)',
+        yellow: 'rgba(255, 205, 86, 0.7)',
+    };
+
+    // داده‌های نمودارها
+    const chartData = {{ chart_data|tojson }};
+    console.log("Chart data loaded:", chartData);
+
+    try {
+        // نمودار روند زمانی
+        const timeCtx = document.getElementById('timeChart').getContext('2d');
+        new Chart(timeCtx, {
+            type: 'line',
+            data: {
+                labels: chartData.time_labels,
+                datasets: [
+                    {
+                        label: 'تعداد کوییزها',
+                        data: chartData.time_counts,
+                        borderColor: colors.blue,
+                        backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        yAxisID: 'y',
+                    },
+                    {
+                        label: 'میانگین نمرات',
+                        data: chartData.time_scores,
+                        borderColor: colors.green,
+                        backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        yAxisID: 'y1',
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: 'تعداد کوییزها'
+                        }
+                    },
+                    y1: {
+                        beginAtZero: true,
+                        max: 100,
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: 'میانگین نمرات (%)'
+                        },
+                        grid: {
+                            drawOnChartArea: false,
+                        },
+                    }
+                }
+            }
+        });
+        console.log("Time chart created");
+    } catch (error) {
+        console.error("Error creating time chart:", error);
+    }
+
+    try {
+        // نمودار دسته‌بندی‌ها
+        const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+        new Chart(categoryCtx, {
+            type: 'bar',
+            data: {
+                labels: chartData.categories,
+                datasets: [
+                    {
+                        label: 'تعداد شرکت‌کنندگان',
+                        data: chartData.category_counts,
+                        backgroundColor: colors.blue,
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1,
+                        yAxisID: 'y',
+                    },
+                    {
+                        label: 'میانگین نمرات',
+                        data: chartData.category_scores,
+                        backgroundColor: colors.green,
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1,
+                        type: 'line',
+                        fill: false,
+                        yAxisID: 'y1',
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: 'تعداد شرکت‌کنندگان'
+                        }
+                    },
+                    y1: {
+                        beginAtZero: true,
+                        max: 100,
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: 'میانگین نمرات (%)'
+                        },
+                        grid: {
+                            drawOnChartArea: false,
+                        },
+                    }
+                }
+            }
+        });
+        console.log("Category chart created");
+    } catch (error) {
+        console.error("Error creating category chart:", error);
+    }
+
+    try {
+        // نمودار عملکرد کاربران
+        const userPerformanceCtx = document.getElementById('userPerformanceChart').getContext('2d');
+        new Chart(userPerformanceCtx, {
+            type: 'bar',
+            data: {
+                labels: chartData.users,
+                datasets: [
+                    {
+                        label: 'تعداد کوییزها',
+                        data: chartData.user_counts,
+                        backgroundColor: colors.blue,
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1,
+                        yAxisID: 'y',
+                    },
+                    {
+                        label: 'میانگین نمرات',
+                        data: chartData.user_scores,
+                        backgroundColor: colors.green,
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1,
+                        type: 'line',
+                        fill: false,
+                        yAxisID: 'y1',
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: 'تعداد کوییزها'
+                        }
+                    },
+                    y1: {
+                        beginAtZero: true,
+                        max: 100,
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: 'میانگین نمرات (%)'
+                        },
+                        grid: {
+                            drawOnChartArea: false,
+                        },
+                    }
+                }
+            }
+        });
+        console.log("User performance chart created");
+    } catch (error) {
+        console.error("Error creating user performance chart:", error);
+    }
+
+    try {
+        // نمودار سطوح دشواری
+        const difficultyCtx = document.getElementById('difficultyChart').getContext('2d');
+        new Chart(difficultyCtx, {
+            type: 'pie',
+            data: {
+                labels: chartData.difficulty_labels,
+                datasets: [{
+                    data: chartData.difficulty_counts,
+                    backgroundColor: [colors.green, colors.yellow, colors.red],
+                    borderColor: 'rgba(255, 255, 255, 0.5)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            font: {
+                                size: 14
+                            }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.label}: ${context.raw} کوییز - میانگین نمره: ${chartData.difficulty_scores[context.dataIndex].toFixed(1)}%`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        console.log("Difficulty chart created");
+    } catch (error) {
+        console.error("Error creating difficulty chart:", error);
+    }
+
+    try {
+        // نمودار پیشرفت کاربران
+        const userProgressCtx = document.getElementById('userProgressChart').getContext('2d');
+        let userProgressChart;
+
+        // تابع برای به‌روزرسانی نمودار پیشرفت کاربر
+        function updateUserProgressChart(username) {
+            if (userProgressChart) {
+                userProgressChart.destroy();
+            }
+
+            if (!username || !chartData.progress_data[username]) {
+                return;
+            }
+
+            const userData = chartData.progress_data[username];
+            userProgressChart = new Chart(userProgressCtx, {
+                type: 'line',
+                data: {
+                    labels: userData.dates,
+                    datasets: [{
+                        label: 'نمرات کاربر',
+                        data: userData.scores,
+                        borderColor: colors.purple,
+                        backgroundColor: 'rgba(153, 102, 255, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: {
+                                display: true,
+                                text: 'نمره (%)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // ایجاد نمودار پیشرفت کاربر با انتخاب کاربر
+        const userSelector = document.getElementById('userSelector');
+        if (userSelector) {
+            userSelector.addEventListener('change', function() {
+                updateUserProgressChart(this.value);
+            });
+        }
+        console.log("User progress chart setup complete");
+    } catch (error) {
+        console.error("Error setting up user progress chart:", error);
+    }
+});
+</script>
+{% endblock %}
