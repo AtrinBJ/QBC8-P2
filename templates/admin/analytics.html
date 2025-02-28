@@ -2,120 +2,534 @@
 
 {% block title %}آنالیز سیستم کوییز{% endblock %}
 
+{% block custom_css %}
+<style>
+    /* استایل‌های بهبود یافته برای صفحه آنالیتیکس */
+    .analytics-container {
+        background-color: rgba(0, 0, 0, 0.6);
+        border-radius: 10px;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+    .card {
+        background-color: rgba(30, 30, 40, 0.7);
+        border: 1px solid rgba(100, 100, 255, 0.2);
+        border-radius: 10px;
+        transition: all 0.3s ease;
+    }
+
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    .card-title {
+        color: #8be9fd;
+        font-weight: bold;
+        border-bottom: 1px solid rgba(139, 233, 253, 0.3);
+        padding-bottom: 10px;
+    }
+
+    /* استایل آیکون‌ها */
+    .display-4 {
+        color: #bd93f9;
+    }
+
+    /* بهبود نمودارها */
+    canvas {
+        background-color: rgba(20, 20, 30, 0.4);
+        border-radius: 8px;
+        padding: 10px;
+        font-family: 'Vazir', sans-serif !important;
+    }
+
+    /* استایل فیلترها */
+    .filter-panel {
+        background-color: rgba(40, 42, 54, 0.8);
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+
+    .search-box {
+        position: relative;
+    }
+
+    .search-box input {
+        padding-right: 40px;
+        background-color: rgba(30, 30, 40, 0.6);
+        color: #f8f8f2;
+        border: 1px solid rgba(100, 100, 255, 0.2);
+    }
+
+    .search-box .bi-search {
+        position: absolute;
+        right: 15px;
+        top: 10px;
+    }
+
+    /* استایل‌های بهبود یافته برای لیست‌های کشویی */
+    .form-select {
+        background-color: rgba(40, 42, 54, 0.7);
+        color: #f8f8f2 !important;
+        border: 1px solid rgba(100, 100, 255, 0.3);
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .form-select:focus {
+        background-color: rgba(40, 42, 54, 0.9);
+        border-color: #bd93f9;
+        box-shadow: 0 0 0 0.25rem rgba(189, 147, 249, 0.25);
+    }
+
+    .form-select option {
+        background-color: #282a36;
+        color: #f8f8f2 !important;
+        padding: 10px;
+    }
+
+    .filter-badge {
+        background-color: #6272a4;
+        color: #f8f8f2;
+        padding: 5px 10px;
+        border-radius: 15px;
+        margin-right: 5px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .filter-badge:hover, .filter-badge.active {
+        background-color: #bd93f9;
+    }
+
+    .download-btn {
+        background-color: #50fa7b;
+        color: #282a36;
+        border: none;
+        transition: all 0.3s ease;
+    }
+
+    .download-btn:hover {
+        background-color: #5af78e;
+        transform: translateY(-2px);
+    }
+
+    /* رنگ‌بندی جدول */
+    .table {
+        color: #f8f8f2;
+        background-color: rgba(40, 42, 54, 0.7);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .table th {
+        background-color: rgba(68, 71, 90, 0.8);
+        color: #8be9fd;
+        border-color: rgba(98, 114, 164, 0.4);
+    }
+
+    .table td {
+        border-color: rgba(98, 114, 164, 0.2);
+    }
+
+    /* رنگ بندی مقادیر */
+    .card-body h3 {
+        color: #ffd272;
+        font-weight: bold;
+    }
+
+    /* استایل‌های پاسخگو */
+    @media (max-width: 768px) {
+        .filter-panel {
+            flex-direction: column;
+        }
+
+        .filter-item {
+            margin-bottom: 10px;
+            width: 100%;
+        }
+    }
+
+    /* استایل‌های جدید برای لیست کاربران */
+    .user-search-results {
+        position: absolute;
+        width: 100%;
+        max-height: 200px;
+        overflow-y: auto;
+        background-color: rgba(40, 42, 54, 0.95);
+        border: 1px solid rgba(100, 100, 255, 0.3);
+        border-radius: 0 0 8px 8px;
+        z-index: 1000;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .user-search-item {
+        padding: 8px 15px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border-bottom: 1px solid rgba(98, 114, 164, 0.2);
+    }
+
+    .user-search-item:hover {
+        background-color: rgba(68, 71, 90, 0.8);
+    }
+
+    .user-search-item.active {
+        background-color: rgba(98, 114, 164, 0.4);
+    }
+
+    /* رنگ‌های کپی شده از تصویر نمونه */
+    .stats-card {
+        transition: all 0.3s ease;
+    }
+
+    .stats-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .stats-icon {
+        color: #bd93f9;
+        font-size: 3rem;
+        margin-bottom: 15px;
+    }
+
+    .stats-title {
+        color: #8be9fd;
+        font-size: 1.1rem;
+        margin-bottom: 10px;
+    }
+
+    .stats-value {
+        color: #50fa7b;
+        font-size: 2rem;
+        font-weight: bold;
+    }
+
+    /* دکمه‌های تب نمودار */
+    .chart-tab-btn {
+        background-color: rgba(68, 71, 90, 0.7);
+        color: #f8f8f2;
+        border: none;
+        border-radius: 5px;
+        padding: 5px 15px;
+        margin-left: 5px;
+        transition: all 0.2s ease;
+    }
+
+    .chart-tab-btn.active {
+        background-color: #bd93f9;
+        color: #282a36;
+    }
+
+    .chart-tab-btn:hover {
+        background-color: rgba(189, 147, 249, 0.7);
+    }
+
+    /* استایل‌های جدید برای بهبود ظاهر و فونت نمودارها */
+    .chart-container {
+        padding: 10px;
+        background-color: rgba(40, 42, 54, 0.4);
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+
+    /* انیمیشن برای تغییر فیلترها */
+    .chart-container canvas {
+        transition: all 0.5s ease;
+    }
+
+    .filter-change {
+        animation: filterChange 0.5s ease;
+    }
+
+    @keyframes filterChange {
+        0% { opacity: 0.5; transform: scale(0.98); }
+        100% { opacity: 1; transform: scale(1); }
+    }
+
+    /* استایل برای فیلترهای فعال */
+    #activeFilterBadges .badge {
+        font-family: 'Vazir', sans-serif;
+        padding: 8px 12px;
+        margin-right: 5px;
+        background-color: #6272a4;
+        color: #f8f8f2;
+        border-radius: 20px;
+        transition: all 0.3s ease;
+    }
+
+    #activeFilterBadges .badge:hover {
+        background-color: #8be9fd;
+        color: #282a36;
+        transform: translateY(-2px);
+    }
+
+    /* استایل برای مقیاس زمانی */
+    .time-scale-btn {
+        background-color: rgba(68, 71, 90, 0.7);
+        color: #f8f8f2;
+        border: none;
+        border-radius: 5px;
+        padding: 5px 15px;
+        margin-left: 5px;
+        transition: all 0.2s ease;
+    }
+
+    .time-scale-btn.active {
+        background-color: #ff79c6;
+        color: #282a36;
+    }
+
+    .time-scale-btn:hover {
+        background-color: rgba(255, 121, 198, 0.7);
+    }
+
+    /* اصلاح اندازه نمودارها */
+    #categoryChart, #userPerformanceChart {
+        height: 400px !important;
+    }
+
+    /* دکمه نمایش نمودار کاربر */
+    .display-chart-btn {
+        margin-left: 10px;
+        background-color: #6272a4;
+        border-color: #6272a4;
+        transition: all 0.3s ease;
+    }
+
+    .display-chart-btn:hover {
+        background-color: #bd93f9;
+        border-color: #bd93f9;
+    }
+
+    /* بهبود نمایش پنل اطلاعات سطح دشواری */
+    .difficulty-details {
+        margin-top: 20px;
+        animation: fadeIn 0.5s ease;
+    }
+
+    .difficulty-details .card {
+        padding: 15px;
+        margin-bottom: 15px;
+        transition: all 0.3s ease;
+    }
+
+    .difficulty-details .card:hover {
+        transform: translateY(-5px);
+    }
+
+    .difficulty-details h6 {
+        font-weight: bold;
+        margin-bottom: 15px;
+    }
+
+    .difficulty-details ul {
+        list-style-type: none;
+        padding-right: 10px;
+    }
+
+    .difficulty-details ul li {
+        margin-bottom: 5px;
+    }
+
+    #downloadReport {
+        margin-bottom: -2rem;
+    }
+
+    #timePerformanceChart, #categoryChart, #timeChart, #userPerformanceChart, #questionsSuccessRateChart {
+        height: 300px !important;
+        display: inline-block !important;
+    }
+
+    #difficultyChart {
+        width: 50% !important;
+        height: 350px !important;
+        display: inline-block !important;
+        margin-top: 5% !important;
+        background: transparent !important;
+    }
+
+    .chart-container {
+        text-align: center !important;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .fully-transparent {
+        background: transparent !important;
+        color: transparent !important;
+    }
+
+    .badge{
+        max-width: 100%;
+        overflow: hidden;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container">
+<div class="container analytics-container">
     <h2 class="mb-4">
         <i class="bi bi-bar-chart-fill me-2"></i>
         تحلیل‌ها و آمار سیستم
     </h2>
 
-    <!-- حالت‌های نمایش آمار -->
-<div class="card mb-4">
-    <div class="card-body">
-        <ul class="nav nav-tabs" id="analyticsTabs" role="tablist">
-            <li class="nav-item" role="presentation">
-                <a class="nav-link {% if not selected_user %}active{% endif %}"
-                   href="{{ url_for('admin_analytics') }}">
-                    <i class="bi bi-people-fill me-1"></i>
-                    آمار کلی سیستم
-                </a>
-            </li>
-            <li class="nav-item" role="presentation">
-                <a class="nav-link {% if selected_user %}active{% endif %}"
-                   id="user-tab" data-bs-toggle="tab" data-bs-target="#user-content"
-                   type="button" role="tab" aria-controls="user-content"
-                   aria-selected="{% if selected_user %}true{% else %}false{% endif %}">
-                    <i class="bi bi-person-fill me-1"></i>
-                    آمار کاربر خاص
-                </a>
-            </li>
-        </ul>
+    <!-- پنل فیلتر جدید با استفاده از لیست‌های کشویی -->
+    <div class="filter-panel mb-4">
+        <div class="row align-items-center">
+            <!-- جستجوی کاربر -->
+            <div class="col-lg-6 col-md-12 mb-3">
+                <label class="form-label text-light">جستجوی کاربر:</label>
+                <div class="search-box">
+                    <input type="text" id="userSearchInput" class="form-control" placeholder="نام کاربری را وارد کنید...">
+                    <i class="bi bi-search"></i>
+                    <div id="userSearchResults" class="user-search-results" style="display: none;"></div>
+                </div>
+            </div>
 
-        <div class="tab-content mt-3" id="analyticsTabContent">
-            <!-- محتوای تب کاربر خاص -->
-            <div class="tab-pane fade {% if selected_user %}show active{% endif %}" id="user-content" role="tabpanel" aria-labelledby="user-tab">
-                {% if selected_user %}
-                    <div class="alert alert-info mb-3">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">
-                                <i class="bi bi-person-badge me-2"></i>
-                                در حال نمایش آمار کاربر: {{ selected_user.username }}
-                            </h5>
-                            <a href="{{ url_for('admin_analytics') }}" class="btn btn-primary">
-                                <i class="bi bi-arrow-left me-1"></i>
-                                بازگشت به آمار کلی
-                            </a>
-                        </div>
-                    </div>
-                {% else %}
-                    <form action="{{ url_for('admin_user_analytics') }}" method="get" class="row g-3 align-items-end">
-                        <div class="col-md-8">
-                            <label for="selected_user" class="form-label">انتخاب کاربر</label>
-                            <select class="form-select" id="selected_user" name="user_id" required>
-                                <option value="" selected disabled>کاربر مورد نظر را انتخاب کنید</option>
-                                {% for user in all_users %}
-                                <option value="{{ user.id }}">{{ user.username }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <button type="submit" class="btn btn-primary w-100">
-                                <i class="bi bi-search me-1"></i>
-                                نمایش آمار کاربر
-                            </button>
-                        </div>
-                    </form>
-                {% endif %}
+            <!-- دکمه دانلود گزارش -->
+            <div class="col-lg-6 col-md-6 mb-3 text-end">
+                <button id="downloadReport" class="btn download-btn">
+                    <i class="bi bi-file-earmark-excel me-1"></i>
+                    دانلود گزارش Excel
+                </button>
+            </div>
+        </div>
+
+        <div class="row mt-2">
+            <!-- فیلتر بازه زمانی به صورت لیست کشویی -->
+            <div class="col-lg-4 col-md-6 mb-3">
+                <label class="form-label text-light">بازه زمانی:</label>
+                <select id="timeRangeFilter" class="form-select custom-select">
+                    <option value="all" selected>همه زمان‌ها</option>
+                    <option value="1m">۱ ماه اخیر</option>
+                    <option value="3m">۳ ماه اخیر</option>
+                    <option value="1y">۱ سال اخیر</option>
+                </select>
+            </div>
+
+            <!-- فیلتر سطح دشواری به صورت لیست کشویی -->
+            <div class="col-lg-4 col-md-6 mb-3">
+                <label class="form-label text-light">سطح دشواری:</label>
+                <select id="difficultyFilter" class="form-select custom-select">
+                    <option value="all" selected>همه سطوح</option>
+                    <option value="easy">آسان</option>
+                    <option value="medium">متوسط</option>
+                    <option value="hard">سخت</option>
+                </select>
+            </div>
+
+            <!-- فیلتر دسته‌بندی به صورت لیست کشویی -->
+            <div class="col-lg-4 col-md-12 mb-3">
+                <label class="form-label text-light">دسته‌بندی:</label>
+                <select id="categoryFilter" class="form-select custom-select">
+                    <option value="all" selected>همه دسته‌بندی‌ها</option>
+                    {% for category in categories %}
+                        <option value="{{ category }}">{{ category }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <!-- نمایش فیلترهای فعال -->
+        <div id="activeFilters" class="mt-3 d-none">
+            <div class="d-flex align-items-center">
+                <span class="text-light me-2">فیلترهای فعال:</span>
+                <div class="d-flex flex-wrap" id="activeFilterBadges"></div>
+                <button id="clearAllFilters" class="btn btn-sm btn-outline-danger ms-2">پاک کردن فیلترها</button>
             </div>
         </div>
     </div>
-</div>
-
-    {% if selected_user %}
-    <!-- اطلاعات کاربر انتخاب شده -->
-    <div class="alert alert-info">
-        <h4>
-            <i class="bi bi-person-badge me-2"></i>
-            نمایش آمار کاربر: {{ selected_user.username }}
-        </h4>
-    </div>
-    {% endif %}
 
     <!-- شاخص‌های کلیدی عملکرد (KPIs) -->
     <div class="row mb-4">
         <div class="col-md-3">
-            <div class="card text-center">
+            <div class="card text-center stats-card">
                 <div class="card-body">
-                    <i class="bi bi-people-fill display-4 mb-2"></i>
-                    <h5 class="card-title">تعداد کاربران</h5>
-                    <h3>{{ total_users }}</h3>
+                    <i class="bi bi-people-fill stats-icon"></i>
+                    <h5 class="stats-title">تعداد کاربران</h5>
+                    <h3 class="stats-value">{{ total_users }}</h3>
                 </div>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card text-center">
+            <div class="card text-center stats-card">
                 <div class="card-body">
-                    <i class="bi bi-card-checklist display-4 mb-2"></i>
-                    <h5 class="card-title">تعداد کوییزها</h5>
-                    <h3>{{ total_quizzes }}</h3>
+                    <i class="bi bi-card-checklist stats-icon"></i>
+                    <h5 class="stats-title">تعداد سوالات</h5>
+                    <h3 class="stats-value">{{ total_questions }}</h3>
                 </div>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card text-center">
+            <div class="card text-center stats-card">
                 <div class="card-body">
-                    <i class="bi bi-lightbulb-fill display-4 mb-2"></i>
-                    <h5 class="card-title">تعداد سوالات</h5>
-                    <h3>{{ total_questions }}</h3>
+                    <i class="bi bi-journal-check stats-icon"></i>
+                    <h5 class="stats-title">تعداد کوییزها</h5>
+                    <h3 class="stats-value">{{ total_quizzes }}</h3>
                 </div>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card text-center">
+            <div class="card text-center stats-card">
                 <div class="card-body">
-                    <i class="bi bi-trophy-fill display-4 mb-2"></i>
-                    <h5 class="card-title">میانگین نمرات</h5>
-                    <h3>{{ avg_total_score }}%</h3>
+                    <i class="bi bi-trophy-fill stats-icon"></i>
+                    <h5 class="stats-title">میانگین نمرات</h5>
+                    <h3 class="stats-value">{{ avg_total_score }}%</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- نمودار روند زمانی (با فیلترهای محور افقی) - اصلاح شده -->
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">روند زمانی عملکرد</h5>
+
+                    <!-- فقط فیلترهای مقیاس زمانی -->
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <div class="d-flex justify-content-end">
+                                <div class="btn-group btn-group-sm" role="group" aria-label="مقیاس زمانی">
+                                    <button type="button" class="chart-tab-btn time-scale-btn active" data-time-scale="day">روز</button>
+                                    <button type="button" class="chart-tab-btn time-scale-btn" data-time-scale="month">ماه</button>
+                                    <button type="button" class="chart-tab-btn time-scale-btn" data-time-scale="year">سال</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <canvas id="timePerformanceChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- تحلیل کاربران -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">عملکرد کاربران</h5>
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <div class="d-flex justify-content-end">
+                                <div class="btn-group btn-group-sm" role="group" aria-label="مقیاس زمانی">
+                                    <button type="button" class="fully-transparent chart-tab-btn time-scale-btn active" data-time-scale="day">?!</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <canvas id="userPerformanceChart"></canvas>
                 </div>
             </div>
         </div>
@@ -123,17 +537,7 @@
 
     <!-- بخش نمودارها -->
     <div class="row mb-4">
-        <!-- تحلیل زمانی -->
-        <div class="col-md-6 mb-4">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">روند زمانی</h5>
-                    <canvas id="timeChart" style="background: #efefef;border-radius: 2px;"></canvas>
-                </div>
-            </div>
-        </div>
-
-        <!-- تحلیل دسته‌بندی‌ها -->
+        <!-- عملکرد دسته‌بندی‌ها -->
         <div class="col-md-6 mb-4">
             <div class="card">
                 <div class="card-body">
@@ -143,36 +547,275 @@
             </div>
         </div>
 
-        {% if not selected_user %}
-        <!-- تحلیل کاربران - فقط در حالت آمار کلی -->
+        <!-- روند زمانی -->
         <div class="col-md-6 mb-4">
             <div class="card">
                 <div class="card-body">
-                    <h5 class="card-title">عملکرد کاربران</h5>
-                    <canvas id="userPerformanceChart"></canvas>
-                </div>
-            </div>
-        </div>
-        {% endif %}
-
-        <!-- تحلیل سطح دشواری -->
-        <div class="col-md-6 mb-4">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">سطوح دشواری</h5>
-                    <canvas id="difficultyChart"></canvas>
+                    <h5 class="card-title">روند زمانی</h5>
+                    <canvas id="timeChart"></canvas>
                 </div>
             </div>
         </div>
     </div>
 
-    {% if not selected_user %}
-    <!-- تحلیل عملکرد کاربران - فقط در حالت آمار کلی -->
+    <div class="row mb-4">
+        <!-- تحلیل سطح دشواری -->
+        <div class="col-md-12 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">سطوح دشواری</h5>
+                    <div class="row ">
+                        <canvas id="difficultyChart" class="col-md-6"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- رتبه‌بندی کاربران -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">رتبه‌بندی کاربران</h5>
+            <div class="table-responsive">
+                <table class="table" id="userRankingTable">
+                    <thead>
+                        <tr>
+                            <th>رتبه</th>
+                            <th>نام کاربری</th>
+                            <th>تعداد کوییز</th>
+                            <th>میانگین نمره</th>
+                            <th>بهترین دسته‌بندی</th>
+                            <th>عملیات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in user_performance|sort(attribute='avg_score', reverse=True) %}
+                        <tr class="user-row" data-username="{{ user.username }}">
+                            <td>{{ loop.index }}</td>
+                            <td>{{ user.username }}</td>
+                            <td>{{ user.quiz_count }}</td>
+                            <td>{{ "%.1f"|format(user.avg_score) }}%</td>
+                            <td>{{ user.category_best }}</td>
+                            <td>
+                                <button class="btn btn-sm btn-primary view-user-stats" data-user-id="{{ user.id }}" data-username="{{ user.username }}">
+                                    <i class="bi bi-bar-chart-fill"></i>
+                                    آمار کاربر
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- نمودار راداری برای قوت و ضعف کاربران در دسته‌بندی‌ها -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">قوت و ضعف کاربران در دسته‌بندی‌ها</h5>
+
+            <!-- انتخاب کاربر برای نمایش نمودار راداری -->
+            <div class="row mb-3">
+                <div class="col-md-6 d-flex align-items-end">
+                    <label class="form-label text-light me-2">انتخاب کاربر:</label>
+                    <select id="radarUserFilter" class="form-select custom-select">
+                        <option value="all" selected>همه کاربران</option>
+                        {% for username in all_usernames %}
+                            <option value="{{ username }}">{{ username }}</option>
+                        {% endfor %}
+                    </select>
+                    <button id="displayRadarChart" class="btn btn-primary display-chart-btn">
+                        <i class="bi bi-bar-chart"></i>
+                        نمایش
+                    </button>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <canvas id="categoryRadarChart" height="300"></canvas>
+            </div>
+
+            <div class="mt-3">
+                <small class="text-muted">این نمودار قوت و ضعف کاربران را در دسته‌بندی‌های مختلف کوییز نشان می‌دهد. با استفاده از فیلتر بالا می‌توانید کاربر مورد نظر را انتخاب کنید.</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- نمودار زمان پاسخگویی -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">زمان پاسخگویی کاربران</h5>
+
+            <!-- انتخاب کاربر برای نمایش نمودار زمان پاسخگویی -->
+            <div class="row mb-3">
+                <div class="col-md-6 d-flex align-items-end">
+                    <label class="form-label text-light me-2">انتخاب کاربر:</label>
+                    <select id="timeResponseUserFilter" class="form-select custom-select">
+                        <option value="all" selected>همه کاربران</option>
+                        {% for username in all_usernames %}
+                            <option value="{{ username }}">{{ username }}</option>
+                        {% endfor %}
+                    </select>
+                    <button id="displayTimeResponseChart" class="btn btn-primary display-chart-btn">
+                        <i class="bi bi-bar-chart"></i>
+                        نمایش
+                    </button>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <canvas id="responseTimeChart" height="300"></canvas>
+            </div>
+
+            <div class="mt-3">
+                <small class="text-muted">این نمودار زمان پاسخگویی کاربران را در طول زمان نشان می‌دهد. با استفاده از فیلتر بالا می‌توانید کاربر مورد نظر را انتخاب کنید.</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- پنل تحلیل سوالات دسته‌بندی -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">تحلیل سوالات دسته‌بندی</h5>
+
+            <!-- انتخاب دسته‌بندی برای تحلیل سوالات -->
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label text-light">انتخاب دسته‌بندی:</label>
+                    <select id="categoryQuestionsFilter" class="form-select custom-select">
+                        <option value="" selected>انتخاب دسته‌بندی...</option>
+                        {% for category in categories %}
+                            <option value="{{ category }}">{{ category }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6 d-flex align-items-end">
+                    <button id="analyzeQuestionsBtn" class="btn btn-primary mb-2">
+                        <i class="bi bi-search"></i>
+                        تحلیل سوالات
+                    </button>
+                </div>
+            </div>
+
+            <!-- نتایج تحلیل سوالات -->
+            <div id="categoryQuestionsResults" class="d-none">
+                <!-- نمودار نرخ پاسخ صحیح به هر سوال -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <h6 class="card-title">نرخ پاسخ صحیح به سوالات</h6>
+                                <div class="chart-container">
+                                    <canvas id="questionsSuccessRateChart" height="250"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- سوالات مشکل‌دار و پرتکرار -->
+                <div class="row mb-4">
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h6 class="card-title">سوالات مشکل‌دار (نرخ موفقیت پایین)</h6>
+                                <div id="problematicQuestionsList" class="list-group" style="max-height: 300px; overflow-y: auto;">
+                                    <!-- اینجا با JavaScript پر می‌شود -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h6 class="card-title">سوالات با بیشترین اشتباه</h6>
+                                <div id="mostWrongQuestionsList" class="list-group" style="max-height: 300px; overflow-y: auto;">
+                                    <!-- اینجا با JavaScript پر می‌شود -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- جدول تحلیل همه سوالات -->
+                <div class="card">
+                    <div class="card-body">
+                        <h6 class="card-title">تحلیل کامل سوالات</h6>
+                        <div class="table-responsive">
+                            <table class="table" id="questionsAnalysisTable">
+                                <thead>
+                                    <tr>
+                                        <th>سوال</th>
+                                        <th>تعداد پاسخ</th>
+                                        <th>تعداد پاسخ صحیح</th>
+                                        <th>نرخ موفقیت</th>
+                                        <th>گزینه‌های نادرست پرتکرار</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- اینجا با JavaScript پر می‌شود -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- پیام در حال بارگذاری -->
+            <div id="categoryQuestionsLoading" class="text-center d-none">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">در حال بارگذاری...</span>
+                </div>
+                <p class="mt-2">در حال تحلیل سوالات...</p>
+            </div>
+
+            <!-- پیام خطا -->
+            <div id="categoryQuestionsError" class="alert alert-danger d-none">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                <span id="categoryQuestionsErrorMessage"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- بخش جدید برای توزیع سختی سوالات در دسته‌بندی‌ها -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">توزیع سختی سوالات در دسته‌بندی‌ها</h5>
+
+            <!-- انتخاب دسته‌بندی برای نمایش توزیع سختی -->
+            <div class="row mb-3">
+                <div class="col-md-6 d-flex align-items-end">
+                    <label class="form-label text-light me-2">انتخاب دسته‌بندی:</label>
+                    <select id="difficultyDistributionCategory" class="form-select custom-select">
+                        <option value="all" selected>همه دسته‌بندی‌ها</option>
+                        {% for category in categories %}
+                            <option value="{{ category }}">{{ category }}</option>
+                        {% endfor %}
+                    </select>
+                    <button id="displayDifficultyDistribution" class="btn btn-primary display-chart-btn">
+                        <i class="bi bi-bar-chart"></i>
+                        نمایش
+                    </button>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <canvas id="questionDifficultyDistributionChart" height="300"></canvas>
+            </div>
+
+            <div class="mt-3">
+                <small class="text-muted">این نمودار توزیع سختی سوالات در هر دسته‌بندی را نشان می‌دهد. با استفاده از فیلتر بالا می‌توانید دسته‌بندی مورد نظر را انتخاب کنید.</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- تحلیل عملکرد کاربران -->
     <div class="card mb-4">
         <div class="card-body">
             <h5 class="card-title">عملکرد کاربران</h5>
             <div class="table-responsive">
-                <table class="table">
+                <table class="table table-hover" id="userPerformanceTable">
                     <thead>
                         <tr>
                             <th>نام کاربری</th>
@@ -187,13 +830,13 @@
                     </thead>
                     <tbody>
                         {% for user in user_performance %}
-                        <tr>
+                        <tr class="user-row" data-username="{{ user.username }}">
                             <td>{{ user.username }}</td>
                             <td>{{ user.quiz_count }}</td>
                             <td>{{ "%.1f"|format(user.avg_score) }}%</td>
                             <td>{{ user.min_score }}%</td>
                             <td>{{ user.max_score }}%</td>
-                            <td>{{ user.category_best | safe }}</td>
+                            <td>{{ user.category_best }}</td>
                             <td>
                                 {% if user.avg_score >= 80 %}
                                     <span class="badge bg-success">عالی</span>
@@ -204,10 +847,10 @@
                                 {% endif %}
                             </td>
                             <td>
-                                <a href="{{ url_for('admin_user_analytics', user_id=user.id) }}" class="btn btn-sm btn-primary">
+                                <button class="btn btn-sm btn-primary view-user-stats" data-user-id="{{ user.id }}" data-username="{{ user.username }}">
                                     <i class="bi bi-bar-chart-fill"></i>
                                     آمار کاربر
-                                </a>
+                                </button>
                             </td>
                         </tr>
                         {% endfor %}
@@ -216,52 +859,13 @@
             </div>
         </div>
     </div>
-
-    <!-- رتبه‌بندی کاربران - فقط در حالت آمار کلی -->
-    <div class="card mb-4">
-        <div class="card-body">
-            <h5 class="card-title">رتبه‌بندی کاربران</h5>
-            <div class="table-responsive">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>رتبه</th>
-                            <th>نام کاربری</th>
-                            <th>تعداد کوییز</th>
-                            <th>میانگین نمره</th>
-                            <th>بهترین دسته‌بندی</th>
-                            <th>عملیات</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for user in user_performance|sort(attribute='avg_score', reverse=True) %}
-                        <tr>
-                            <td>{{ loop.index }}</td>
-                            <td>{{ user.username }}</td>
-                            <td>{{ user.quiz_count }}</td>
-                            <td>{{ "%.1f"|format(user.avg_score) }}%</td>
-                            <td>{{ user.category_best | safe }}</td>
-                            <td>
-                                <a href="{{ url_for('admin_user_analytics', user_id=user.id) }}" class="btn btn-sm btn-primary">
-                                    <i class="bi bi-bar-chart-fill"></i>
-                                    آمار کاربر
-                                </a>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-    {% endif %}
 
     <!-- تحلیل دسته‌بندی‌ها -->
     <div class="card mb-4">
         <div class="card-body">
             <h5 class="card-title">آمار دسته‌بندی‌ها</h5>
             <div class="table-responsive">
-                <table class="table">
+                <table class="table" id="categoryTable">
                     <thead>
                         <tr>
                             <th>دسته‌بندی</th>
@@ -274,8 +878,8 @@
                     </thead>
                     <tbody>
                         {% for stat in category_stats %}
-                        <tr>
-                            <td>{{ stat.category | safe }}</td>
+                        <tr class="category-row" data-category="{{ stat.category }}">
+                            <td>{{ stat.category }}</td>
                             <td>{{ stat.total_attempts }}</td>
                             <td>{{ "%.1f"|format(stat.avg_score) }}%</td>
                             <td>{{ "%.1f"|format(stat.min_score) }}%</td>
@@ -296,343 +900,68 @@
             </div>
         </div>
     </div>
-
-    <!-- پیشرفت کاربران -->
-    <div class="card mb-4">
-        <div class="card-body">
-            <h5 class="card-title">روند پیشرفت کاربر</h5>
-            {% if selected_user %}
-                <!-- در حالت انتخاب کاربر خاص، مستقیماً نمودار پیشرفت آن کاربر نمایش داده می‌شود -->
-                <canvas id="userProgressChart"></canvas>
-            {% else %}
-                <!-- در حالت کلی، باید کاربر مورد نظر را انتخاب کرد -->
-                <select id="userSelector" class="form-select mb-3">
-                    <option value="">انتخاب کاربر...</option>
-                    {% for username in chart_data.progress_data %}
-                    <option value="{{ username }}">{{ username }}</option>
-                    {% endfor %}
-                </select>
-                <canvas id="userProgressChart"></canvas>
-            {% endif %}
-        </div>
-    </div>
 </div>
 
-<!-- اسکریپت نمودارها -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    console.log("DOM loaded for analytics page");
-
-    Chart.defaults.font.family = "Vazir"
-
-    // رنگ‌های سفارشی برای نمودارها
-    const colors = {
-        blue: 'rgba(54, 162, 235, 0.7)',
-        green: 'rgba(75, 192, 192, 0.7)',
-        red: 'rgba(255, 99, 132, 0.7)',
-        orange: 'rgba(255, 159, 64, 0.7)',
-        purple: 'rgba(153, 102, 255, 0.7)',
-        yellow: 'rgba(255, 205, 86, 0.7)',
-    };
-
-    // داده‌های نمودارها
-    const chartData = {{ chart_data | tojson }};
-    console.log("Chart data loaded:", chartData);
-
-    try {
-        // نمودار روند زمانی
-        const timeCtx = document.getElementById('timeChart');
-        if (timeCtx) {
-            new Chart(timeCtx.getContext('2d'), {
-                type: 'line',
-                data: {
-                    labels: chartData.time_labels,
-                    datasets: [
-                        {
-                            label: 'تعداد کوییزها',
-                            data: chartData.time_counts,
-                            borderColor: colors.blue,
-                            backgroundColor: 'rgba(54, 162, 235, 0.1)',
-                            borderWidth: 2,
-                            tension: 0.4,
-                            yAxisID: 'y',
-                        },
-                        {
-                            label: 'میانگین نمرات',
-                            data: chartData.time_scores,
-                            borderColor: colors.green,
-                            backgroundColor: 'rgba(75, 192, 192, 0.1)',
-                            borderWidth: 2,
-                            tension: 0.4,
-                            yAxisID: 'y1',
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            position: 'left',
-                            title: {
-                                display: true,
-                                text: 'تعداد کوییزها'
-                            }
-                        },
-                        y1: {
-                            beginAtZero: true,
-                            max: 100,
-                            position: 'right',
-                            title: {
-                                display: true,
-                                text: 'میانگین نمرات (%)'
-                            },
-                            grid: {
-                                drawOnChartArea: false,
-                            },
-                        }
-                    }
-                }
-            });
-            console.log("Time chart created");
-        }
-    } catch (error) {
-        console.error("Error creating time chart:", error);
-    }
-
-    try {
-        // نمودار دسته‌بندی‌ها
-        const categoryCtx = document.getElementById('categoryChart');
-        if (categoryCtx) {
-            new Chart(categoryCtx.getContext('2d'), {
-                type: 'bar',
-                data: {
-                    labels: chartData.categories,
-                    datasets: [
-                        {
-                            label: 'تعداد شرکت‌کنندگان',
-                            data: chartData.category_counts,
-                            backgroundColor: colors.blue,
-                            borderColor: 'rgba(54, 162, 235, 1)',
-                            borderWidth: 1,
-                            yAxisID: 'y',
-                        },
-                        {
-                            label: 'میانگین نمرات',
-                            data: chartData.category_scores,
-                            backgroundColor: colors.green,
-                            borderColor: 'rgba(75, 192, 192, 1)',
-                            borderWidth: 1,
-                            type: 'line',
-                            fill: false,
-                            yAxisID: 'y1',
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            position: 'left',
-                            title: {
-                                display: true,
-                                text: 'تعداد شرکت‌کنندگان'
-                            }
-                        },
-                        y1: {
-                            beginAtZero: true,
-                            max: 100,
-                            position: 'right',
-                            title: {
-                                display: true,
-                                text: 'میانگین نمرات (%)'
-                            },
-                            grid: {
-                                drawOnChartArea: false,
-                            },
-                        }
-                    }
-                }
-            });
-            console.log("Category chart created");
-        }
-    } catch (error) {
-        console.error("Error creating category chart:", error);
-    }
-
-    try {
-        // نمودار عملکرد کاربران - فقط در حالت آمار کلی
-        const userPerformanceCtx = document.getElementById('userPerformanceChart');
-        if (userPerformanceCtx) {
-            new Chart(userPerformanceCtx.getContext('2d'), {
-                type: 'bar',
-                data: {
-                    labels: chartData.users,
-                    datasets: [
-                        {
-                            label: 'تعداد کوییزها',
-                            data: chartData.user_counts,
-                            backgroundColor: colors.blue,
-                            borderColor: 'rgba(54, 162, 235, 1)',
-                            borderWidth: 1,
-                            yAxisID: 'y',
-                        },
-                        {
-                            label: 'میانگین نمرات',
-                            data: chartData.user_scores,
-                            backgroundColor: colors.green,
-                            borderColor: 'rgba(75, 192, 192, 1)',
-                            borderWidth: 1,
-                            type: 'line',
-                            fill: false,
-                            yAxisID: 'y1',
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            position: 'left',
-                            title: {
-                                display: true,
-                                text: 'تعداد کوییزها'
-                            }
-                        },
-                        y1: {
-                            beginAtZero: true,
-                            max: 100,
-                            position: 'right',
-                            title: {
-                                display: true,
-                                text: 'میانگین نمرات (%)'
-                            },
-                            grid: {
-                                drawOnChartArea: false,
-                            },
-                        }
-                    }
-                }
-            });
-            console.log("User performance chart created");
-        }
-    } catch (error) {
-        console.error("Error creating user performance chart:", error);
-    }
-
-    try {
-        // نمودار سطوح دشواری
-        const difficultyCtx = document.getElementById('difficultyChart');
-        if (difficultyCtx) {
-            new Chart(difficultyCtx.getContext('2d'), {
-                type: 'pie',
-                data: {
-                    labels: chartData.difficulty_labels,
-                    datasets: [{
-                        data: chartData.difficulty_counts,
-                        backgroundColor: [colors.green, colors.yellow, colors.red],
-                        borderColor: 'rgba(255, 255, 255, 0.5)',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                font: {
-                                    size: 14
-                                }
-                            }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return `${context.label}: ${context.raw} کوییز - میانگین نمره: ${chartData.difficulty_scores[context.dataIndex].toFixed(1)}%`;
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-            console.log("Difficulty chart created");
-        }
-    } catch (error) {
-        console.error("Error creating difficulty chart:", error);
-    }
-
-    try {
-        // نمودار پیشرفت کاربران
-        const userProgressCtx = document.getElementById('userProgressChart');
-        if (userProgressCtx) {
-            let userProgressChart;
-            const selectedUser = '{{ selected_user.username if selected_user else "" }}';
-
-            // تابع برای به‌روزرسانی نمودار پیشرفت کاربر
-            function updateUserProgressChart(username) {
-                if (userProgressChart) {
-                    userProgressChart.destroy();
-                }
-
-                if (!username || !chartData.progress_data[username]) {
-                    if (userProgressCtx.parentElement) {
-                        userProgressCtx.parentElement.innerHTML = '<div class="alert alert-info">لطفاً یک کاربر را انتخاب کنید</div>';
-                    }
-                    return;
-                }
-
-                const userData = chartData.progress_data[username];
-                userProgressChart = new Chart(userProgressCtx.getContext('2d'), {
-                    type: 'line',
-                    data: {
-                        labels: userData.dates,
-                        datasets: [{
-                            label: 'نمرات کاربر',
-                            data: userData.scores,
-                            borderColor: colors.purple,
-                            backgroundColor: 'rgba(153, 102, 255, 0.1)',
-                            tension: 0.4,
-                            fill: true
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                max: 100,
-                                title: {
-                                    display: true,
-                                    text: 'نمره (%)'
-                                }
-                            }
-                        }
-                    }
-                });
-            }
-
-            // در حالت انتخاب کاربر خاص، مستقیماً نمودار آن کاربر را نمایش می‌دهیم
-            if (selectedUser) {
-                updateUserProgressChart(selectedUser);
-            } else {
-                // در حالت عادی، یک منوی کشویی برای انتخاب کاربر نمایش می‌دهیم
-                const userSelector = document.getElementById('userSelector');
-                if (userSelector) {
-                    userSelector.addEventListener('change', function() {
-                        updateUserProgressChart(this.value);
-                    });
-                }
-            }
-
-            console.log("User progress chart setup complete");
-        }
-    } catch (error) {
-        console.error("Error setting up user progress chart:", error);
-    }
-});
+<!-- قالب بهبود یافته برای نمایش جزئیات سطوح دشواری -->
+<script id="difficultyDetailedTemplate" type="text/x-template">
+    <div class="row mt-3 difficulty-details">
+        <div class="col-md-4">
+            <div class="card bg-dark">
+                <h6 class="text-success">سطح آسان</h6>
+                <p><strong>تعداد کوییزها:</strong> ${difficulty_detailed['آسان'].count}</p>
+                <p><strong>میانگین نمره:</strong> ${difficulty_detailed['آسان'].avg_score.toFixed(1)}%</p>
+                <p><strong>میانگین زمان:</strong> ${difficulty_detailed['آسان'].avg_time.toFixed(1)} ثانیه</p>
+                <p><strong>دسته‌بندی‌های متداول:</strong></p>
+                <ul class="text-light">
+                    ${Object.entries(difficulty_detailed['آسان'].categories)
+                        .sort((a, b) => b[1] - a[1])
+                        .slice(0, 3)
+                        .map(cat => `<li>${cat[0]}: ${cat[1]} کوییز</li>`)
+                        .join('')}
+                </ul>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-dark">
+                <h6 class="text-warning">سطح متوسط</h6>
+                <p><strong>تعداد کوییزها:</strong> ${difficulty_detailed['متوسط'].count}</p>
+                <p><strong>میانگین نمره:</strong> ${difficulty_detailed['متوسط'].avg_score.toFixed(1)}%</p>
+                <p><strong>میانگین زمان:</strong> ${difficulty_detailed['متوسط'].avg_time.toFixed(1)} ثانیه</p>
+                <p><strong>دسته‌بندی‌های متداول:</strong></p>
+                <ul class="text-light">
+                    ${Object.entries(difficulty_detailed['متوسط'].categories)
+                        .sort((a, b) => b[1] - a[1])
+                        .slice(0, 3)
+                        .map(cat => `<li>${cat[0]}: ${cat[1]} کوییز</li>`)
+                        .join('')}
+                </ul>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-dark">
+                <h6 class="text-danger">سطح سخت</h6>
+                <p><strong>تعداد کوییزها:</strong> ${difficulty_detailed['سخت'].count}</p>
+                <p><strong>میانگین نمره:</strong> ${difficulty_detailed['سخت'].avg_score.toFixed(1)}%</p>
+                <p><strong>میانگین زمان:</strong> ${difficulty_detailed['سخت'].avg_time.toFixed(1)} ثانیه</p>
+                <p><strong>دسته‌بندی‌های متداول:</strong></p>
+                <ul class="text-light">
+                    ${Object.entries(difficulty_detailed['سخت'].categories)
+                        .sort((a, b) => b[1] - a[1])
+                        .slice(0, 3)
+                        .map(cat => `<li>${cat[0]}: ${cat[1]} کوییز</li>`)
+                        .join('')}
+                </ul>
+            </div>
+        </div>
+    </div>
 </script>
+{% endblock %}
+
+{% block custom_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script>
+// تعریف متغیر chartData برای استفاده در فایل analytics.js
+var chartData = {{ chart_data|tojson }};
+</script>
+<script src="{{ url_for('static', filename='js/analytics.js') }}"></script>
 {% endblock %}

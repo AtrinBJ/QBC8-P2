@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+
+{% block title %}لیست تیکت‌ها{% endblock %}
+
+{% block custom_css %}
+<style>
+    .tickets-container {
+        background-color: rgba(0, 0, 0, 0.6);
+        border-radius: 10px;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+    .ticket-card {
+        transition: all 0.3s ease;
+        margin-bottom: 15px;
+    }
+
+    .ticket-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .status-badge {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: bold;
+    }
+
+    .status-open {
+        background-color: rgba(80, 250, 123, 0.2);
+        color: #50fa7b;
+        border: 1px solid #50fa7b;
+    }
+
+    .status-inprogress {
+        background-color: rgba(241, 250, 140, 0.2);
+        color: #f1fa8c;
+        border: 1px solid #f1fa8c;
+    }
+
+    .status-closed {
+        background-color: rgba(255, 85, 85, 0.2);
+        color: #ff5555;
+        border: 1px solid #ff5555;
+    }
+
+    .date-time {
+        font-size: 0.8rem;
+        color: rgba(248, 248, 242, 0.7);
+    }
+
+    .empty-tickets {
+        text-align: center;
+        padding: 50px 20px;
+    }
+
+    .empty-tickets i {
+        font-size: 5rem;
+        color: rgba(139, 233, 253, 0.5);
+        margin-bottom: 20px;
+    }
+
+    .create-ticket-btn {
+        background-color: #6272a4;
+        border-color: #6272a4;
+        transition: all 0.3s ease;
+    }
+
+    .create-ticket-btn:hover {
+        background-color: #bd93f9;
+        border-color: #bd93f9;
+        transform: translateY(-2px);
+    }
+
+    .role-badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 20px;
+    }
+
+    .role-sender {
+        background-color: rgba(139, 233, 253, 0.2);
+        color: #8be9fd;
+        border: 1px solid #8be9fd;
+    }
+
+    .role-recipient {
+        background-color: rgba(189, 147, 249, 0.2);
+        color: #bd93f9;
+        border: 1px solid #bd93f9;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container tickets-container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>
+            <i class="bi bi-ticket-perforated-fill me-2"></i>
+            {% if is_admin %}
+                مدیریت تیکت‌ها
+            {% else %}
+                تیکت‌های پشتیبانی
+            {% endif %}
+        </h2>
+
+        <a href="{{ url_for('new_ticket') }}" class="btn btn-primary create-ticket-btn">
+            <i class="bi bi-plus-circle me-1"></i>
+            ایجاد تیکت جدید
+        </a>
+    </div>
+
+    {% if tickets %}
+        <div class="row">
+            {% for ticket in tickets %}
+                <div class="col-md-6">
+                    <div class="card ticket-card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <h5 class="card-title">{{ ticket.title }}</h5>
+                                <span class="status-badge
+                                    {% if ticket.status == 'باز' %}status-open
+                                    {% elif ticket.status == 'در حال بررسی' %}status-inprogress
+                                    {% else %}status-closed{% endif %}">
+                                    {{ ticket.status }}
+                                </span>
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="d-flex align-items-center my-2">
+                                    {% if ticket.user_id == user.id %}
+                                        <span class="role-badge role-sender me-2">فرستنده</span>
+                                    {% else %}
+                                        <span class="role-badge role-recipient me-2">گیرنده</span>
+                                    {% endif %}
+
+                                    <small class="text-muted">
+                                        {% if ticket.user_id == user.id %}
+                                            ارسال شده به: {{ ticket.recipient.username }}
+                                        {% else %}
+                                            دریافت شده از: {{ ticket.sender.username }}
+                                        {% endif %}
+                                    </small>
+                                </div>
+                                <div class="date-time">
+                                    <i class="bi bi-calendar3 me-1"></i>
+                                    ایجاد شده در: {{ ticket.created_at.strftime('%Y/%m/%d %H:%M') }}
+                                </div>
+                                <div class="date-time">
+                                    <i class="bi bi-clock-history me-1"></i>
+                                    آخرین به‌روزرسانی: {{ ticket.updated_at.strftime('%Y/%m/%d %H:%M') }}
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="badge bg-info">
+                                    {{ ticket.messages|length }} پیام
+                                </span>
+                                <a href="{{ url_for('view_ticket', ticket_id=ticket.id) }}" class="btn btn-sm btn-primary">
+                                    <i class="bi bi-chat-dots me-1"></i>
+                                    مشاهده و پاسخ
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-tickets">
+            <i class="bi bi-ticket-perforated"></i>
+            <h4>هیچ تیکتی یافت نشد</h4>
+            <p class="text-muted">برای ارتباط با پشتیبانی می‌توانید تیکت جدیدی ایجاد کنید.</p>
+            <a href="{{ url_for('new_ticket') }}" class="btn btn-primary mt-3">
+                <i class="bi bi-plus-circle me-1"></i>
+                ایجاد تیکت جدید
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

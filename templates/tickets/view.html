@@ -1,0 +1,300 @@
+{% extends "base.html" %}
+
+{% block title %}مشاهده تیکت - {{ ticket.title }}{% endblock %}
+
+{% block custom_css %}
+<style>
+    .ticket-container {
+        background-color: rgba(0, 0, 0, 0.6);
+        border-radius: 10px;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+    .card {
+        background-color: rgba(30, 30, 40, 0.7);
+        border: 1px solid rgba(100, 100, 255, 0.2);
+        border-radius: 10px;
+        transition: all 0.3s ease;
+    }
+
+    .status-badge {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: bold;
+    }
+
+    .status-open {
+        background-color: rgba(80, 250, 123, 0.2);
+        color: #50fa7b;
+        border: 1px solid #50fa7b;
+    }
+
+    .status-inprogress {
+        background-color: rgba(241, 250, 140, 0.2);
+        color: #f1fa8c;
+        border: 1px solid #f1fa8c;
+    }
+
+    .status-closed {
+        background-color: rgba(255, 85, 85, 0.2);
+        color: #ff5555;
+        border: 1px solid #ff5555;
+    }
+
+    .date-time {
+        font-size: 0.8rem;
+        color: rgba(248, 248, 242, 0.7);
+    }
+
+    /* استایل برای پیام‌ها */
+    .message-list {
+        max-height: 500px;
+        overflow-y: auto;
+        margin-bottom: 20px;
+        padding: 0 5px;
+    }
+
+    .message-bubble {
+        max-width: 80%;
+        margin-bottom: 15px;
+        padding: 15px;
+        border-radius: 15px;
+        position: relative;
+    }
+
+    .message-user {
+        background-color: rgba(139, 233, 253, 0.2);
+        color: #f8f8f2;
+        border: 1px solid rgba(139, 233, 253, 0.4);
+        margin-right: auto;
+        border-bottom-left-radius: 5px;
+    }
+
+    .message-admin {
+        background-color: rgba(189, 147, 249, 0.2);
+        color: #f8f8f2;
+        border: 1px solid rgba(189, 147, 249, 0.4);
+        margin-left: auto;
+        border-bottom-right-radius: 5px;
+    }
+
+    .message-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        font-size: 0.85rem;
+    }
+
+    .message-sender {
+        font-weight: bold;
+    }
+
+    .message-time {
+        color: rgba(248, 248, 242, 0.7);
+    }
+
+    .message-content {
+        white-space: pre-line;
+    }
+
+    /* استایل فرم پاسخ */
+    .form-control {
+        background-color: rgba(40, 42, 54, 0.7);
+        color: #f8f8f2;
+        border: 1px solid rgba(100, 100, 255, 0.3);
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus {
+        background-color: rgba(40, 42, 54, 0.9);
+        color: #f8f8f2;
+        border-color: #bd93f9;
+        box-shadow: 0 0 0 0.25rem rgba(189, 147, 249, 0.25);
+    }
+
+    .send-btn {
+        background-color: #6272a4;
+        border-color: #6272a4;
+        transition: all 0.3s ease;
+    }
+
+    .send-btn:hover {
+        background-color: #bd93f9;
+        border-color: #bd93f9;
+        transform: translateY(-2px);
+    }
+
+    .ticket-closed-message {
+        background-color: rgba(255, 85, 85, 0.2);
+        color: #ff5555;
+        border: 1px solid #ff5555;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+
+    .ticket-waiting-message {
+        background-color: rgba(241, 250, 140, 0.2);
+        color: #f1fa8c;
+        border: 1px solid #f1fa8c;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+
+    /* اسکرول‌بار سفارشی */
+    .message-list::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .message-list::-webkit-scrollbar-track {
+        background: rgba(40, 42, 54, 0.5);
+        border-radius: 10px;
+    }
+
+    .message-list::-webkit-scrollbar-thumb {
+        background: rgba(98, 114, 164, 0.7);
+        border-radius: 10px;
+    }
+
+    .message-list::-webkit-scrollbar-thumb:hover {
+        background: #bd93f9;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container ticket-container">
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start flex-wrap">
+                <div>
+                    <h3 class="card-title mb-3">
+                        <i class="bi bi-ticket-perforated-fill me-2"></i>
+                        {{ ticket.title }}
+                    </h3>
+
+                    <div class="mb-3">
+                        <div class="date-time">
+                            <i class="bi bi-person me-1"></i>
+                            فرستنده: {{ ticket.sender.username }}
+                        </div>
+                        <div class="date-time">
+                            <i class="bi bi-person-check me-1"></i>
+                            گیرنده: {{ ticket.recipient.username }}
+                        </div>
+                        <div class="date-time">
+                            <i class="bi bi-calendar3 me-1"></i>
+                            ایجاد شده در: {{ ticket.created_at.strftime('%Y/%m/%d %H:%M') }}
+                        </div>
+                        <div class="date-time">
+                            <i class="bi bi-clock-history me-1"></i>
+                            آخرین به‌روزرسانی: {{ ticket.updated_at.strftime('%Y/%m/%d %H:%M') }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex flex-column align-items-end">
+                    <span class="status-badge mb-2
+                        {% if ticket.status == 'باز' %}status-open
+                        {% elif ticket.status == 'در حال بررسی' %}status-inprogress
+                        {% else %}status-closed{% endif %}">
+                        {{ ticket.status }}
+                    </span>
+
+                    <div class="d-flex">
+                        {% if ticket.status == 'بسته' %}
+                            <form method="POST" action="{{ url_for('reopen_ticket', ticket_id=ticket.id) }}">
+                                <button type="submit" class="btn btn-success btn-sm">
+                                    <i class="bi bi-arrow-clockwise me-1"></i>
+                                    بازگشایی مجدد
+                                </button>
+                            </form>
+                        {% else %}
+                            <form method="POST" action="{{ url_for('close_ticket', ticket_id=ticket.id) }}">
+                                <button type="submit" class="btn btn-danger btn-sm">
+                                    <i class="bi bi-x-circle me-1"></i>
+                                    بستن تیکت
+                                </button>
+                            </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <a href="{{ url_for('tickets_list') }}" class="btn btn-outline-primary btn-sm mb-4">
+                <i class="bi bi-arrow-right me-1"></i>
+                بازگشت به لیست تیکت‌ها
+            </a>
+
+            <!-- لیست پیام‌ها -->
+            <h5 class="mb-3">پیام‌ها</h5>
+            <div class="message-list">
+                {% for message in messages %}
+                    <div class="message-bubble {% if message.is_admin %}message-admin{% else %}message-user{% endif %}">
+                        <div class="message-header">
+                            <span class="message-sender">
+                                {% if message.is_admin %}
+                                    <i class="bi bi-shield-check me-1"></i>
+                                    {{ message.author.username }}
+                                {% else %}
+                                    <i class="bi bi-person-circle me-1"></i>
+                                    {{ message.author.username }}
+                                {% endif %}
+                            </span>
+                            <span class="message-time">
+                                {{ message.created_at.strftime('%Y/%m/%d %H:%M') }}
+                            </span>
+                        </div>
+                        <div class="message-content">{{ message.message }}</div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <!-- فرم پاسخ -->
+            {% if ticket.status == 'بسته' %}
+                <div class="ticket-closed-message">
+                    <i class="bi bi-lock-fill me-1"></i>
+                    این تیکت بسته شده است. برای ارسال پیام جدید، ابتدا تیکت را بازگشایی کنید.
+                </div>
+            {% elif not is_recipient %}
+                <div class="ticket-waiting-message">
+                    <i class="bi bi-hourglass-split me-1"></i>
+                    شما نمی‌توانید به تیکت خود پاسخ دهید. لطفاً منتظر پاسخ {{ other_user.username }} باشید.
+                </div>
+            {% else %}
+                <form method="POST" action="{{ url_for('view_ticket', ticket_id=ticket.id) }}">
+                    <div class="mb-3">
+                        <label for="message" class="form-label">پاسخ شما</label>
+                        <textarea class="form-control" id="message" name="message" rows="4" required
+                                 placeholder="پیام خود را بنویسید..."></textarea>
+                    </div>
+                    <div class="d-flex justify-content-end">
+                        <button type="submit" class="btn btn-primary send-btn">
+                            <i class="bi bi-send me-1"></i>
+                            ارسال پاسخ
+                        </button>
+                    </div>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // اسکرول به پایین صفحه پیام‌ها
+        const messageList = document.querySelector('.message-list');
+        if (messageList) {
+            messageList.scrollTop = messageList.scrollHeight;
+        }
+    });
+</script>
+{% endblock %}

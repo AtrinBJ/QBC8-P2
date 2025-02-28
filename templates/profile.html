@@ -2,85 +2,310 @@
 
 {% block title %}پروفایل - {{ user.username }}{% endblock %}
 
+{% block custom_css %}
+<style>
+    /* استایل‌های بهبود یافته برای صفحه پروفایل */
+    .profile-container {
+        background-color: rgba(0, 0, 0, 0.6);
+        border-radius: 10px;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+    .card {
+        background-color: rgba(30, 30, 40, 0.7);
+        border: 1px solid rgba(100, 100, 255, 0.2);
+        border-radius: 10px;
+        transition: all 0.3s ease;
+    }
+
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    .card-title {
+        color: #8be9fd;
+        font-weight: bold;
+        border-bottom: 1px solid rgba(139, 233, 253, 0.3);
+        padding-bottom: 10px;
+    }
+
+    /* استایل آیکون‌ها */
+    .display-1 {
+        color: #bd93f9;
+    }
+
+    /* بهبود نمودارها */
+    canvas {
+        background-color: rgba(20, 20, 30, 0.4);
+        border-radius: 8px;
+        padding: 10px;
+        font-family: 'Vazir', sans-serif !important;
+    }
+
+    /* رنگ‌بندی جدول */
+    .table {
+        color: #f8f8f2;
+        background-color: rgba(40, 42, 54, 0.7);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .table th {
+        background-color: rgba(68, 71, 90, 0.8);
+        color: #8be9fd;
+        border-color: rgba(98, 114, 164, 0.4);
+    }
+
+    .table td {
+        border-color: rgba(98, 114, 164, 0.2);
+    }
+
+    /* رنگ بندی مقادیر */
+    .card-body h3 {
+        color: #50fa7b;
+        font-weight: bold;
+    }
+
+    /* انیمیشن برای نمودارها */
+    .chart-container canvas {
+        transition: all 0.5s ease;
+    }
+
+    /* استایل کارت اطلاعات کاربر */
+    .user-profile-card {
+        text-align: center;
+        padding-top: 25px;
+    }
+
+    .user-avatar {
+        width: 120px;
+        height: 120px;
+        margin: 0 auto 20px;
+        background-color: rgba(189, 147, 249, 0.2);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        color: #bd93f9;
+        border: none;
+    }
+
+    .user-info {
+        margin-bottom: 20px;
+    }
+
+    .user-info h4 {
+        color: #f8f8f2;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+
+    .user-info p {
+        color: rgba(248, 248, 242, 0.7);
+        margin-bottom: 0;
+    }
+
+    .user-stats {
+        background-color: rgba(40, 42, 54, 0.5);
+        border-radius: 8px;
+        padding: 15px 0;
+        margin-top: 20px;
+    }
+
+    .stat-item h5 {
+        font-size: 1rem;
+        color: #8be9fd;
+        margin-bottom: 5px;
+    }
+
+    .stat-item h3 {
+        color: #ffd272;
+        font-size: 1.8rem;
+        margin-bottom: 0;
+    }
+
+    /* استایل بج‌ها */
+    .badge {
+        font-family: 'Vazir', sans-serif;
+        padding: 0.5em 0.8em;
+        border-radius: 20px;
+    }
+
+    .badge.bg-success {
+        background-color: rgba(80, 250, 123, 0.8) !important;
+    }
+
+    .badge.bg-warning {
+        background-color: rgba(241, 250, 140, 0.8) !important;
+        color: #282a36 !important;
+    }
+
+    .badge.bg-danger {
+        background-color: rgba(255, 85, 85, 0.8) !important;
+    }
+
+    /* استایل برای دکمه‌ها */
+    .btn-primary {
+        background-color: #6272a4;
+        border-color: #6272a4;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary:hover {
+        background-color: #bd93f9;
+        border-color: #bd93f9;
+        transform: translateY(-2px);
+    }
+
+    /* استایل برای حالت خالی بودن */
+    .empty-state {
+        text-align: center;
+        padding: 50px 0;
+    }
+
+    .empty-state i {
+        font-size: 5rem;
+        color: rgba(139, 233, 253, 0.5);
+        margin-bottom: 20px;
+    }
+
+    .empty-state h5 {
+        color: #f8f8f2;
+        margin-bottom: 20px;
+    }
+
+    .chart-container {
+        text-align: center !important;
+    }
+
+    #progressChart, #timePerformanceChart, #categoryPerformanceChart {
+        height: 300px !important;
+        display: inline-block !important;
+    }
+
+    #scoreDistributionChart, #difficultyChart {
+        width: 400px !important;
+        height: 400px !important;
+        display: inline-block !important;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container">
-    <!-- اطلاعات اصلی کاربر -->
+<div class="container profile-container">
     <div class="row mb-4">
+        <!-- اطلاعات اصلی کاربر -->
         <div class="col-md-4">
-            <div class="card">
-                <div class="card-body text-center">
-                    <i class="bi bi-person-circle display-5"></i>
-                    <h4>{{ user.username }}</h4>
-                    <p class="">{{ user.email }}</p>
-                    <hr>
-                    <div class="row">
-                        <div class="col-6">
-                            <h5>تعداد کوییزها</h5>
-                            <h3>{{ total_quizzes }}</h3>
-                        </div>
-                        <div class="col-6">
-                            <h5>میانگین نمرات</h5>
-                            <h3>{{ avg_score }}%</h3>
+            <div class="card h-100">
+                <div class="card-body user-profile-card">
+                    <div class="user-avatar">
+                        <i class="bi bi-person"></i>
+                    </div>
+                    <div class="user-info">
+                        <h4>{{ user.username }}</h4>
+                        <p>{{ user.email }}</p>
+                    </div>
+                    <hr class="bg-light opacity-25">
+                    <div class="user-stats">
+                        <div class="row">
+                            <div class="col-6 stat-item">
+                                <h5>تعداد کوییزها</h5>
+                                <h3>{{ total_quizzes }}</h3>
+                            </div>
+                            <div class="col-6 stat-item">
+                                <h5>میانگین نمرات</h5>
+                                <h3>{{ avg_score }}%</h3>
+                            </div>
                         </div>
                     </div>
+                </div>
+                <div class="card-footer">
+                    <a href="{{ url_for('categories') }}" class="btn btn-primary w-100">
+                        <i class="bi bi-play-fill me-2"></i>
+                        شروع کوییز جدید
+                    </a>
                 </div>
             </div>
         </div>
 
-        <!-- فرم ویرایش پروفایل -->
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-body">
-                    <h2>ویرایش پروفایل</h2>
-                    <form action="/edit" method="POST">
-                        <label for="password">رمز عبور جدید</label>
-                        <input type="password" name="password" id="password" placeholder="رمز عبور" required value='{{ user.password_hash[:10] }}' class="form-control mb-2">
-                        <label for="email">ایمیل جدید</label>
-                        <input type="text" name="email" id="email" placeholder="ایمیل" value='{{ user.email }}' class="form-control mb-2">
-                        <input type="hidden" name="id" value='{{ user.id }}'>
-                        <button type="submit" class="btn btn-primary">به‌روزرسانی</button>
-                    </form>
-                </div>
-            </div>
-        </div>
         <!-- نمودار پیشرفت -->
-        <div class="col-md-4">
-            <div class="card">
+        <div class="col-md-8">
+            <div class="card h-100">
                 <div class="card-body">
                     <h5 class="card-title">روند پیشرفت</h5>
-                    <canvas id="progressChart" style="background: #efefef;border-radius: 2px;"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-    </div>
-
-    <!-- آمار دسته‌بندی‌ها -->
-    <div class="row mb-4">
-        {% for category, stats in category_stats.items() %}
-        <div class="col-md-4 mb-3">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">{{ category | safe }}</h5>
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <p class="mb-0">تعداد: {{ stats.count }}</p>
-                            <p class="mb-0">میانگین: {{ "%.1f"|format(stats.avg_score) }}%</p>
-                        </div>
-                        <div class="h2 {{ 'text-success' if stats.avg_score >= 80 else 'text-warning' if stats.avg_score >= 60 else 'text-danger' }}">
-                            <i class="bi {{ 'bi-emoji-smile' if stats.avg_score >= 80 else 'bi-emoji-neutral' if stats.avg_score >= 60 else 'bi-emoji-frown' }}"></i>
-                        </div>
+                    <div class="chart-container">
+                        <canvas id="progressChart"></canvas>
                     </div>
                 </div>
             </div>
         </div>
-        {% endfor %}
+    </div>
+
+    <!-- ردیف دوم - نمودارهای جدید -->
+    <div class="row mb-4">
+        <!-- نمودار عملکرد دسته‌بندی‌ها -->
+        <div class="col-md-12 mb-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">عملکرد در دسته‌بندی‌ها</h5>
+                    <div class="chart-container">
+                        <canvas id="categoryPerformanceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ردیف سوم - آمار سطح دشواری و زمان -->
+    <div class="row mb-4">
+        <!-- نمودار توزیع نمرات -->
+        <div class="col-md-6 mb-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">توزیع نمرات</h5>
+                    <div class="chart-container">
+                        <canvas id="scoreDistributionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- نمودار سطح دشواری -->
+        <div class="col-md-6 mb-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">عملکرد بر اساس سطح دشواری</h5>
+                    <div class="chart-container">
+                        <canvas id="difficultyChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <!-- نمودار زمان پاسخگویی -->
+        <div class="col-md-12 mb-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">زمان پاسخگویی</h5>
+                    <div class="chart-container">
+                        <canvas id="timePerformanceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- جدول نتایج -->
     <div class="card">
         <div class="card-body">
             <h5 class="card-title">تاریخچه کوییزها</h5>
+
             {% if results %}
             <div class="table-responsive">
                 <table class="table">
@@ -97,7 +322,7 @@
                         {% for result in results %}
                         <tr>
                             <td>{{ result.date.strftime('%Y/%m/%d %H:%M') }}</td>
-                            <td>{{ result.category | safe }}</td>
+                            <td>{{ result.category }}</td>
                             <td>{{ result.score }}%</td>
                             <td>{{ result.time_taken }}</td>
                             <td>
@@ -115,51 +340,363 @@
                 </table>
             </div>
             {% else %}
-            <div class="text-center py-5">
-                <i class="bi bi-journal-x display-1 mb-3"></i>
+            <div class="empty-state">
+                <i class="bi bi-journal-x"></i>
                 <h5>هنوز در هیچ کوییزی شرکت نکرده‌اید</h5>
-                <a href="{{ url_for('index') }}" class="btn btn-primary mt-3">مشاهده کوییزها</a>
+                <a href="{{ url_for('categories') }}" class="btn btn-primary mt-3">مشاهده کوییزها</a>
             </div>
             {% endif %}
         </div>
     </div>
 </div>
+{% endblock %}
 
-<!-- اسکریپت نمودار -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% block custom_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    Chart.defaults.font.family = "Vazir"
-    const ctx = document.getElementById('progressChart').getContext('2d');
-    new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: {{ chart_labels|tojson }},
-            datasets: [{
-                label: 'نمرات',
-                data: {{ chart_scores|tojson }},
-                borderColor: '#0d6efd',
-                tension: 0.4,
-                fill: false,
-                backgroundColor: 'rgba(13, 110, 253, 0.1)'
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    display: false
+    console.log("DOM loaded for profile page");
+
+    // بررسی لود شدن Chart.js
+    if (typeof Chart === 'undefined') {
+        console.error("Chart.js library is not loaded!");
+        return;
+    }
+
+    // تنظیم فونت پیش‌فرض برای تمام نمودارها
+    Chart.defaults.font.family = 'Vazir, sans-serif';
+    Chart.defaults.font.size = 14;
+
+    // تنظیم رنگ‌های نمودار
+    const colors = {
+        blue: 'rgba(80, 150, 250, 0.7)',
+        blueLight: 'rgba(80, 150, 250, 0.1)',
+        green: 'rgba(80, 250, 123, 0.7)',
+        greenLight: 'rgba(80, 250, 123, 0.1)',
+        red: 'rgba(255, 85, 85, 0.7)',
+        redLight: 'rgba(255, 85, 85, 0.1)',
+        orange: 'rgba(255, 184, 108, 0.7)',
+        orangeLight: 'rgba(255, 184, 108, 0.1)',
+        purple: 'rgba(189, 147, 249, 0.7)',
+        purpleLight: 'rgba(189, 147, 249, 0.1)',
+        yellow: 'rgba(241, 250, 140, 0.7)',
+        yellowLight: 'rgba(241, 250, 140, 0.1)',
+        pink: 'rgba(255, 121, 198, 0.7)',
+        pinkLight: 'rgba(255, 121, 198, 0.1)',
+        cyan: 'rgba(139, 233, 253, 0.7)',
+        cyanLight: 'rgba(139, 233, 253, 0.1)',
+    };
+
+    // داده‌های پیش‌پردازش شده
+    const chartLabels = {{ chart_labels|tojson }};
+    const chartScores = {{ chart_scores|tojson }};
+    const chartTimes = {{ chart_times|tojson }};
+
+    // تنظیمات مشترک برای همه نمودارها
+    const commonOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                labels: {
+                    color: '#f8f8f2',
+                    font: {
+                        family: 'Vazir, sans-serif',
+                        size: 14
+                    }
                 }
             },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    max: 100
+            tooltip: {
+                backgroundColor: 'rgba(40, 42, 54, 0.8)',
+                titleColor: '#8be9fd',
+                bodyColor: '#f8f8f2',
+                borderColor: '#6272a4',
+                borderWidth: 1,
+                bodyFont: {
+                    family: 'Vazir, sans-serif'
+                },
+                titleFont: {
+                    family: 'Vazir, sans-serif'
                 }
             }
-
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                grid: {
+                    color: 'rgba(98, 114, 164, 0.2)'
+                },
+                ticks: {
+                    color: '#f8f8f2',
+                    font: {
+                        family: 'Vazir, sans-serif',
+                        size: 12
+                    }
+                }
+            },
+            x: {
+                grid: {
+                    color: 'rgba(98, 114, 164, 0.2)'
+                },
+                ticks: {
+                    color: '#f8f8f2',
+                    font: {
+                        family: 'Vazir, sans-serif',
+                        size: 12
+                    }
+                }
+            }
         }
-    });
+    };
+
+    // 1. نمودار روند پیشرفت
+    const progressCtx = document.getElementById('progressChart');
+    if (progressCtx && chartLabels && chartLabels.length > 0) {
+        new Chart(progressCtx.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: chartLabels,
+                datasets: [{
+                    label: 'نمرات',
+                    data: chartScores,
+                    borderColor: colors.blue,
+                    backgroundColor: colors.blueLight,
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: true,
+                    pointBackgroundColor: colors.blue,
+                    pointBorderColor: '#fff',
+                    pointRadius: 5,
+                    pointHoverRadius: 7
+                }]
+            },
+            options: {
+                ...commonOptions,
+                scales: {
+                    ...commonOptions.scales,
+                    y: {
+                        ...commonOptions.scales.y,
+                        max: 100,
+                        title: {
+                            display: true,
+                            text: 'نمره (%)',
+                            color: '#f8f8f2',
+                            font: {
+                                family: 'Vazir, sans-serif'
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        console.log("Progress chart created");
+    } else {
+        console.log("Progress chart not created - no data or element not found");
+    }
+
+    // 2. نمودار عملکرد دسته‌بندی‌ها
+    const categoryData = {
+        labels: [],
+        scores: []
+    };
+
+    {% for category, stats in category_stats.items() %}
+    categoryData.labels.push("{{ category }}");
+    categoryData.scores.push({{ stats.avg_score }});
+    {% endfor %}
+
+    const categoryCtx = document.getElementById('categoryPerformanceChart');
+    if (categoryCtx && categoryData.labels.length > 0) {
+        new Chart(categoryCtx.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: categoryData.labels,
+                datasets: [{
+                    label: 'میانگین نمره',
+                    data: categoryData.scores,
+                    backgroundColor: colors.green,
+                    borderColor: colors.green,
+                    borderWidth: 1,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                ...commonOptions,
+                scales: {
+                    ...commonOptions.scales,
+                    y: {
+                        ...commonOptions.scales.y,
+                        max: 100,
+                        title: {
+                            display: true,
+                            text: 'نمره (%)',
+                            color: '#f8f8f2',
+                            font: {
+                                family: 'Vazir, sans-serif'
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        console.log("Category chart created");
+    }
+
+    // 3. نمودار توزیع نمرات
+    const distLabels = ['0-20', '21-40', '41-60', '61-80', '81-100'];
+    const distData = [
+        {{ score_distribution['0-20'] }},
+        {{ score_distribution['21-40'] }},
+        {{ score_distribution['41-60'] }},
+        {{ score_distribution['61-80'] }},
+        {{ score_distribution['81-100'] }}
+    ];
+
+    const distributionCtx = document.getElementById('scoreDistributionChart');
+    if (distributionCtx && chartScores && chartScores.length > 0) {
+        new Chart(distributionCtx.getContext('2d'), {
+            type: 'pie',
+            data: {
+                labels: distLabels,
+                datasets: [{
+                    data: distData,
+                    backgroundColor: [
+                        colors.red,
+                        colors.orange,
+                        colors.yellow,
+                        colors.blue,
+                        colors.green
+                    ],
+                    borderColor: 'rgba(40, 42, 54, 1)',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            color: '#f8f8f2',
+                            font: {
+                                family: 'Vazir, sans-serif',
+                                size: 14
+                            }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(40, 42, 54, 0.8)',
+                        titleColor: '#8be9fd',
+                        bodyColor: '#f8f8f2',
+                        bodyFont: {
+                            family: 'Vazir, sans-serif'
+                        },
+                        titleFont: {
+                            family: 'Vazir, sans-serif'
+                        }
+                    }
+                }
+            }
+        });
+        console.log("Distribution chart created");
+    }
+
+    // 4. نمودار سطح دشواری
+    const diffLabels = ['آسان (بالای 80%)', 'متوسط (60-80%)', 'سخت (زیر 60%)'];
+    const diffData = [
+        {{ difficulty_distribution['آسان'] }},
+        {{ difficulty_distribution['متوسط'] }},
+        {{ difficulty_distribution['سخت'] }}
+    ];
+
+    const difficultyCtx = document.getElementById('difficultyChart');
+    if (difficultyCtx && chartScores && chartScores.length > 0) {
+        new Chart(difficultyCtx.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: diffLabels,
+                datasets: [{
+                    data: diffData,
+                    backgroundColor: [
+                        colors.green,
+                        colors.yellow,
+                        colors.red
+                    ],
+                    borderColor: 'rgba(40, 42, 54, 1)',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            color: '#f8f8f2',
+                            font: {
+                                family: 'Vazir, sans-serif',
+                                size: 14
+                            }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(40, 42, 54, 0.8)',
+                        titleColor: '#8be9fd',
+                        bodyColor: '#f8f8f2',
+                        bodyFont: {
+                            family: 'Vazir, sans-serif'
+                        },
+                        titleFont: {
+                            family: 'Vazir, sans-serif'
+                        }
+                    }
+                }
+            }
+        });
+        console.log("Difficulty chart created");
+    }
+
+    // 5. نمودار زمان پاسخگویی
+    const timeCtx = document.getElementById('timePerformanceChart');
+    if (timeCtx && chartTimes && chartTimes.length > 0) {
+        new Chart(timeCtx.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: chartLabels,
+                datasets: [{
+                    label: 'زمان پاسخگویی (ثانیه)',
+                    data: chartTimes,
+                    borderColor: colors.purple,
+                    backgroundColor: colors.purpleLight,
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: true,
+                    pointBackgroundColor: colors.purple,
+                    pointBorderColor: '#fff',
+                    pointRadius: 5,
+                    pointHoverRadius: 7
+                }]
+            },
+            options: {
+                ...commonOptions,
+                scales: {
+                    ...commonOptions.scales,
+                    y: {
+                        ...commonOptions.scales.y,
+                        title: {
+                            display: true,
+                            text: 'زمان (ثانیه)',
+                            color: '#f8f8f2',
+                            font: {
+                                family: 'Vazir, sans-serif'
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        console.log("Time performance chart created");
+    }
 });
 </script>
 {% endblock %}

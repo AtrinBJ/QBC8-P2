@@ -1,0 +1,9 @@
+
+deactivate
+
+rm -rf A:\PythonProject2\.venv1
+
+python -m venv A:\PythonProject2\.venv1
+A:\PythonProject2\.venv1\Scripts\activate
+
+pip install -r requirements.txt

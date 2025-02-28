@@ -1,43 +1,91 @@
-<!-- templates/login.html -->
 {% extends "base.html" %}
 
 {% block title %}ورود به سیستم{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
-    <div class="col-md-6">
+    <div class="col-md-4">
         <div class="card">
             <div class="card-body">
                 <h3 class="card-title text-center mb-4">ورود به سیستم</h3>
 
-                <form method="POST" action="{{ url_for('login') }}">
-                    <div class="mb-3">
-                        <label for="username" class="form-label">نام کاربری</label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-transparent border-end-0">
-                                <i class="bi bi-person"></i>
-                            </span>
-                            <input type="text" class="form-control border-start-0" id="username" name="username" required>
-                        </div>
+                <div class="mb-4">
+                    <ul class="nav nav-tabs" id="loginTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="password-tab" data-bs-toggle="tab" data-bs-target="#password-content" type="button" role="tab">
+                                <i class="bi bi-key me-1"></i>
+                                ورود با رمز عبور
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="email-tab" data-bs-toggle="tab" data-bs-target="#email-content" type="button" role="tab">
+                                <i class="bi bi-envelope me-1"></i>
+                                ورود با ایمیل
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="tab-content" id="loginTabsContent">
+                    <!-- تب ورود با رمز عبور -->
+                    <div class="tab-pane fade show active" id="password-content" role="tabpanel">
+                        <form method="POST" action="{{ url_for('login') }}">
+                            <input type="hidden" name="login_type" value="password">
+
+                            <div class="mb-3">
+                                <label for="username" class="form-label">نام کاربری</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-transparent border-end-0">
+                                        <i class="bi bi-person"></i>
+                                    </span>
+                                    <input type="text" class="form-control border-start-0" id="username" name="username" required>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="password" class="form-label">رمز عبور</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-transparent border-end-0">
+                                        <i class="bi bi-key"></i>
+                                    </span>
+                                    <input type="password" class="form-control border-start-0" id="password" name="password" required>
+                                </div>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-box-arrow-in-right me-2"></i>
+                                    ورود
+                                </button>
+                            </div>
+                        </form>
                     </div>
 
-                    <div class="mb-3">
-                        <label for="password" class="form-label">رمز عبور</label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-transparent border-end-0">
-                                <i class="bi bi-key"></i>
-                            </span>
-                            <input type="password" class="form-control border-start-0" id="password" name="password" required>
-                        </div>
-                    </div>
+                    <!-- تب ورود با ایمیل -->
+                    <div class="tab-pane fade" id="email-content" role="tabpanel">
+                        <form method="POST" action="{{ url_for('login') }}">
+                            <input type="hidden" name="login_type" value="email">
 
-                    <div class="d-grid gap-2">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-box-arrow-in-right me-2"></i>
-                            ورود
-                        </button>
+                            <div class="mb-3">
+                                <label for="username_email" class="form-label">نام کاربری</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-transparent border-end-0">
+                                        <i class="bi bi-person"></i>
+                                    </span>
+                                    <input type="text" class="form-control border-start-0" id="username_email" name="username" required>
+                                </div>
+                                <div class="form-text">کد تأیید به ایمیل ثبت شده برای این نام کاربری ارسال خواهد شد.</div>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-info text-white">
+                                    <i class="bi bi-envelope me-2"></i>
+                                    دریافت کد تأیید
+                                </button>
+                            </div>
+                        </form>
                     </div>
-                </form>
+                </div>
 
                 <div class="text-center mt-4">
                     <p class="mb-0">
