@@ -12,10 +12,24 @@
                         تأیید ایمیل برای ثبت نام
                     {% elif purpose == "login" %}
                         تأیید ایمیل برای ورود
+                    {% elif purpose == "delete_account" %}
+                        تأیید حذف حساب کاربری
                     {% else %}
                         تأیید ایمیل برای به‌روزرسانی
                     {% endif %}
                 </h3>
+
+                {% if purpose == "delete_account" %}
+                <div class="alert alert-danger mb-4">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-exclamation-triangle-fill me-3 fs-4"></i>
+                        <div>
+                            <p class="mb-0"><strong>هشدار: این عملیات غیرقابل بازگشت است!</strong></p>
+                            <p class="mb-0">با تأیید این کد، حساب کاربری شما و تمام اطلاعات مربوط به آن به طور کامل حذف خواهد شد.</p>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
 
                 <div class="alert alert-info mb-4">
                     <div class="d-flex align-items-center">
@@ -28,7 +42,7 @@
                     </div>
                 </div>
 
-                <form method="POST">
+                <form method="POST" action="{% if purpose == 'delete_account' %}{{ url_for('confirm_account_deletion') }}{% endif %}">
                     <input type="hidden" name="verify_email" value="1">
 
                     <div class="mb-4">
@@ -42,12 +56,12 @@
                                    pattern="[0-9]{6}" placeholder="______" required>
                         </div>
                         <div class="text-center mt-2">
-                            <div id="countdown" class="text-muted"></div>
+                            <div id="countdown" class=""></div>
                         </div>
                     </div>
 
                     <div class="d-grid gap-2">
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn {% if purpose == 'delete_account' %}btn-danger{% else %}btn-primary{% endif %}">
                             <i class="bi bi-check-circle me-2"></i>
                             تأیید کد
                         </button>
@@ -71,6 +85,10 @@
                     {% elif purpose == "login" %}
                         <a href="{{ url_for('login') }}" class="btn btn-sm btn-outline-secondary">
                             بازگشت به صفحه ورود
+                        </a>
+                    {% elif purpose == "delete_account" %}
+                        <a href="{{ url_for('edit_profile') }}" class="btn btn-sm btn-outline-secondary">
+                            انصراف و بازگشت
                         </a>
                     {% else %}
                         <a href="{{ url_for('edit_profile') }}" class="btn btn-sm btn-outline-secondary">

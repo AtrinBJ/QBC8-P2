@@ -373,6 +373,47 @@
         max-width: 100%;
         overflow: hidden;
     }
+
+    .bn632-hover {
+      width: 220px;
+      font-size: 16px;
+      font-weight: 600;
+      color: #fff;
+      cursor: pointer;
+      margin: 0px;
+      height: 40px;
+      text-align:center;
+      border: none;
+      background-size: 300% 100%;
+      border-radius: 10px;
+      moz-transition: all .4s ease-in-out;
+      -o-transition: all .4s ease-in-out;
+      -webkit-transition: all .4s ease-in-out;
+      transition: all .4s ease-in-out;
+    }
+
+    .bn632-hover:hover {
+      background-position: 100% 0;
+      moz-transition: all .4s ease-in-out;
+      -o-transition: all .4s ease-in-out;
+      -webkit-transition: all .4s ease-in-out;
+      transition: all .4s ease-in-out;
+    }
+
+    .bn632-hover:focus {
+      outline: none;
+    }
+
+    .bn632-hover.bn19 {
+      background-image: linear-gradient(
+        to right,
+        #f5ce62,
+        #e43603,
+        #fa7199,
+        #e85a19
+      );
+      box-shadow: 0 4px 15px 0 rgba(229, 66, 10, 0.75);
+    }
 </style>
 {% endblock %}
 
@@ -387,7 +428,7 @@
     <div class="filter-panel mb-4">
         <div class="row align-items-center">
             <!-- جستجوی کاربر -->
-            <div class="col-lg-6 col-md-12 mb-3">
+            <div class="col-md-4 mb-3">
                 <label class="form-label text-light">جستجوی کاربر:</label>
                 <div class="search-box">
                     <input type="text" id="userSearchInput" class="form-control" placeholder="نام کاربری را وارد کنید...">
@@ -398,7 +439,7 @@
 
             <!-- دکمه دانلود گزارش -->
             <div class="col-lg-6 col-md-6 mb-3 text-end">
-                <button id="downloadReport" class="btn download-btn">
+                <button id="downloadReport" class="btn download-btn bn632-hover bn19">
                     <i class="bi bi-file-earmark-excel me-1"></i>
                     دانلود گزارش Excel
                 </button>

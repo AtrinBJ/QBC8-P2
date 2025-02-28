@@ -157,131 +157,191 @@ def generate_verification_code(email, purpose="register"):
 
 
 def send_verification_email(email, code, purpose="register"):
-    """ارسال ایمیل حاوی کد تأیید با قالب HTML"""
+    """ارسال ایمیل حاوی کد تأیید با قالب HTML پیشرفته و مسیرهای صحیح"""
     subject_map = {
         "register": "کد تأیید ثبت نام در سیستم کوییز",
         "login": "کد تأیید ورود به سیستم کوییز",
-        "update": "کد تأیید تغییر اطلاعات کاربری"
+        "update": "کد تأیید تغییر اطلاعات کاربری",
+        "delete_account": "کد تأیید حذف حساب کاربری"
     }
 
     # انتخاب عنوان مناسب
     subject = subject_map.get(purpose, "کد تأیید سیستم کوییز")
 
-    # قالب HTML ایمیل
-    html_template = f'''
+    # تعیین رنگ‌ها و آیکون‌ها بر اساس نوع عملیات
+    if purpose == "delete_account":
+        header_bg = "#dc3545"
+        card_bg = "#2c1e20"
+        code_bg = "#3c1e22"
+        code_color = "#ffb3b9"
+        accent_color = "#ff5555"
+        icon = "⚠️"
+        highlight_icon = "🗑️"
+        action_text = "حذف حساب کاربری"
+        button_url = request.url_root + "delete_account"
+        button_text = "بازگشت به صفحه حذف حساب"
+    elif purpose == "register":
+        header_bg = "#28a745"
+        card_bg = "#1e2c22"
+        code_bg = "#1e3c22"
+        code_color = "#b3ffb9"
+        accent_color = "#50fa7b"
+        icon = "🔐"
+        highlight_icon = "✅"
+        action_text = "ثبت نام"
+        button_url = request.url_root + "register"
+        button_text = "بازگشت به صفحه ثبت نام"
+    elif purpose == "login":
+        header_bg = "#0d6efd"
+        card_bg = "#1e222c"
+        code_bg = "#1e223c"
+        code_color = "#b3d9ff"
+        accent_color = "#61dafb"
+        icon = "🔑"
+        highlight_icon = "🔓"
+        action_text = "ورود به سیستم"
+        button_url = request.url_root + "login"
+        button_text = "بازگشت به صفحه ورود"
+    else:  # update
+        header_bg = "#6f42c1"
+        card_bg = "#25202c"
+        code_bg = "#2c203c"
+        code_color = "#d9b3ff"
+        accent_color = "#bd93f9"
+        icon = "🔄"
+        highlight_icon = "📝"
+        action_text = "به‌روزرسانی اطلاعات"
+        button_url = request.url_root + "edit_profile"
+        button_text = "بازگشت به صفحه ویرایش پروفایل"
+
+    # حذف اسلش اضافی در صورت وجود
+    if button_url.endswith('/'):
+        button_url = button_url[:-1]
+
+    # قالب HTML ایمیل پیشرفته با المان‌های گرافیکی بهتر و دکمه عملکردی
+    html_content = f"""
     <!DOCTYPE html>
     <html dir="rtl" lang="fa">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <style>
-            @font-face {{
-                font-family: 'Vazir';
-                src: url('https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font@v27.2.2/dist/Vazir.eot');
-                src: url('https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font@v27.2.2/dist/Vazir.eot?#iefix') format('embedded-opentype'),
-                     url('https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font@v27.2.2/dist/Vazir.woff2') format('woff2'),
-                     url('https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font@v27.2.2/dist/Vazir.woff') format('woff'),
-                     url('https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font@v27.2.2/dist/Vazir.ttf') format('truetype');
-            }}
-            body {{
-                font-family: 'Vazir', Tahoma, sans-serif;
-                color: #ffffff;
-                margin: 0;
-                padding: 0;
-                background-color: #1a1a1a;
-            }}
-            .container {{
-                max-width: 600px;
-                margin: 0 auto;
-                padding: 20px;
-            }}
-            .header {{
-                background-color: #0d6efd;
-                color: white;
-                padding: 20px;
-                text-align: center;
-                border-radius: 10px 10px 0 0;
-            }}
-            .content {{
-                background-color: rgba(40, 42, 54, 0.8);
-                border: 1px solid rgba(100, 100, 255, 0.3);
-                padding: 30px;
-                border-radius: 0 0 10px 10px;
-            }}
-            .verification-code {{
-                font-size: 32px;
-                letter-spacing: 5px;
-                color: #50fa7b;
-                background-color: rgba(40, 42, 54, 0.6);
-                padding: 10px;
-                text-align: center;
-                margin: 20px 0;
-                border-radius: 5px;
-                border: 1px solid rgba(80, 250, 123, 0.5);
-            }}
-            .note {{
-                color: #f8f8f2;
-                font-size: 14px;
-                text-align: center;
-                margin-top: 20px;
-                opacity: 0.8;
-            }}
-            .footer {{
-                margin-top: 30px;
-                text-align: center;
-                font-size: 12px;
-                color: #6272a4;
-            }}
-            .banner {{
-                width: 100%;
-                height: 5px;
-                background: linear-gradient(90deg, #ff5555, #ff79c6, #bd93f9, #8be9fd, #50fa7b, #f1fa8c);
-                margin-bottom: 20px;
-            }}
-        </style>
+        <title>{subject}</title>
     </head>
-    <body>
-        <div class="container">
-            <div class="header">
-                <h1>سیستم کوییز آنلاین</h1>
+    <body style="font-family: Tahoma, Arial, sans-serif; margin: 0; padding: 0; background-color: #141518; color: #ffffff;">
+        <!-- کانتینر اصلی -->
+        <div style="max-width: 600px; margin: 20px auto; background: linear-gradient(160deg, #20222b 0%, #191a21 100%); border-radius: 16px; overflow: hidden; box-shadow: 0 12px 30px rgba(0,0,0,0.8);">
+
+            <!-- هدر با گرادیان -->
+            <div style="background: linear-gradient(135deg, {header_bg} 0%, {header_bg}dd 100%); padding: 30px 20px; text-align: center; border-bottom: 4px solid {accent_color};">
+                <div style="font-size: 52px; margin-bottom: 5px;">{icon}</div>
+                <h1 style="margin: 0; color: white; font-size: 26px; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">سیستم کوییز آنلاین</h1>
+                <p style="margin: 8px 0 0; opacity: 0.9; font-size: 16px;">کد تأیید {action_text}</p>
             </div>
-            <div class="content">
-                <div class="banner"></div>
-                <h2>کد تأیید شما</h2>
-                <p>با سلام،</p>
-                <p>
-                    {'کد تأیید ثبت نام شما در سیستم کوییز:' if purpose == 'register' else
-    'کد تأیید ورود شما به سیستم کوییز:' if purpose == 'login' else
-    'کد تأیید تغییر اطلاعات کاربری شما در سیستم کوییز:'}
-                </p>
-                <div class="verification-code">{code}</div>
-                <p class="note">این کد به مدت 15 دقیقه معتبر است.</p>
-                <div class="footer">
-                    <p>© سیستم کوییز آنلاین - {datetime.now().year}</p>
-                    <p>این یک ایمیل خودکار است، لطفاً به آن پاسخ ندهید.</p>
+
+            <!-- بخش اصلی -->
+            <div style="padding: 35px 25px 20px;">
+                <!-- کارت محتوا -->
+                <div style="background-color: {card_bg}; border-radius: 12px; padding: 25px; margin-bottom: 25px; border-top: 3px solid {accent_color}; box-shadow: 0 8px 20px rgba(0,0,0,0.2);">
+                    <div style="text-align: center; margin-bottom: 25px;">
+                        <div style="font-size: 42px; margin-bottom: 15px;">{highlight_icon}</div>
+                        <h2 style="margin: 0 0 5px; color: #ffffff; font-size: 22px;">کد تأیید شما</h2>
+                        <p style="margin: 0; color: #abb2bf; font-size: 14px;">
+                            {'برای ثبت نام در سیستم کوییز' if purpose == 'register' else
+    'برای ورود به سیستم کوییز' if purpose == 'login' else
+    'برای به‌روزرسانی اطلاعات حساب کاربری شما' if purpose == 'update' else
+    'برای حذف حساب کاربری شما'}
+                        </p>
+                    </div>
+
+                    <!-- کد با طراحی پیشرفته -->
+                    <div style="margin: 30px 0; position: relative;">
+                        <!-- کادر کد -->
+                        <div style="background-color: {code_bg}; border-radius: 12px; padding: 25px 15px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.3); border: 1px solid {accent_color}33;">
+                            <div style="font-size: 38px; letter-spacing: 8px; color: {code_color}; font-weight: bold; text-shadow: 0 2px 8px {accent_color}44;">{code}</div>
+                        </div>
+
+                        <!-- حباب‌های تزیینی -->
+                        <div style="position: absolute; top: -10px; left: -10px; width: 25px; height: 25px; border-radius: 50%; background-color: {accent_color}44;"></div>
+                        <div style="position: absolute; bottom: -5px; right: -5px; width: 15px; height: 15px; border-radius: 50%; background-color: {accent_color}33;"></div>
+                    </div>
+
+                    <!-- متن توضیحات -->
+                    <p style="color: #abb2bf; text-align: center; margin: 20px 0 10px; font-size: 14px;">این کد به مدت <span style="color: {accent_color}; font-weight: bold;">15 دقیقه</span> معتبر است.</p>
                 </div>
+
+                <!-- هشدار برای حذف اکانت -->
+                {f'''
+                <div style="background-color: rgba(220, 53, 69, 0.1); border: 1px solid rgba(220, 53, 69, 0.3); padding: 20px; border-radius: 10px; margin: 25px 0; text-align: center; box-shadow: 0 5px 15px rgba(220, 53, 69, 0.1);">
+                    <div style="font-size: 38px; margin-bottom: 10px;">⚠️</div>
+                    <h3 style="color: #ff5555; margin: 0 0 10px; font-size: 18px;">هشدار: این عملیات غیرقابل بازگشت است!</h3>
+                    <p style="color: #ffb3b9; margin: 0;">با وارد کردن این کد، حساب کاربری شما و تمام اطلاعات مرتبط با آن به طور کامل حذف خواهد شد.</p>
+                </div>
+                ''' if purpose == 'delete_account' else ''}
+
+                <!-- نکات امنیتی -->
+                <div style="background-color: rgba(255, 255, 255, 0.05); border-radius: 8px; padding: 15px; margin-top: 25px;">
+                    <h4 style="margin: 0 0 10px; color: #ffffff; font-size: 16px;">
+                        <span style="margin-right: 5px;">🔒</span>
+                        نکات امنیتی:
+                    </h4>
+                    <ul style="margin: 0; padding-right: 20px; color: #abb2bf; font-size: 14px;">
+                        <li>این کد را با هیچ‌کس به اشتراک نگذارید.</li>
+                        <li>این کد فقط یک بار قابل استفاده است.</li>
+                        <li>تیم پشتیبانی هرگز این کد را از شما درخواست نمی‌کند.</li>
+                    </ul>
+                </div>
+
+                <!-- دکمه عمل با پیوند واقعی -->
+                <div style="text-align: center; margin-top: 35px;">
+                    <a href="{button_url}" style="display: inline-block; background: linear-gradient(135deg, {accent_color}aa 0%, {accent_color} 100%); color: {'#000000' if purpose == 'register' else '#ffffff'}; text-decoration: none; padding: 14px 30px; border-radius: 50px; font-weight: bold; box-shadow: 0 5px 15px {accent_color}44; transition: all 0.3s;">
+                        {button_text}
+                    </a>
+                </div>
+            </div>
+
+            <!-- پاورقی -->
+            <div style="background-color: rgba(0, 0, 0, 0.2); padding: 20px; text-align: center; font-size: 12px; color: #6272a4; border-top: 1px solid #333;">
+                <p style="margin: 0 0 5px;">© سیستم کوییز آنلاین - {datetime.now().year}</p>
+                <p style="margin: 0; opacity: 0.7;">این یک ایمیل خودکار است، لطفاً به آن پاسخ ندهید.</p>
             </div>
         </div>
     </body>
     </html>
-    '''
+    """
 
-    # بدنه ساده متنی (برای مشاهده در کلاینت‌های ایمیل بدون پشتیبانی HTML)
-    text_body = f'''با سلام
+    # بدنه ساده متنی
+    text_body = f"""سیستم کوییز آنلاین
 
-    {'کد تأیید ثبت نام شما در سیستم کوییز:' if purpose == 'register' else
+کد تأیید {action_text}
+
+با سلام،
+
+{'کد تأیید ثبت نام شما در سیستم کوییز:' if purpose == 'register' else
     'کد تأیید ورود شما به سیستم کوییز:' if purpose == 'login' else
-    'کد تأیید تغییر اطلاعات کاربری شما در سیستم کوییز:'} {code}
+    'کد تأیید تغییر اطلاعات کاربری شما در سیستم کوییز:' if purpose == 'update' else
+    'کد تأیید حذف حساب کاربری شما در سیستم کوییز:'} {code}
 
-    این کد به مدت 15 دقیقه معتبر است.
-    '''
+{'هشدار: این عملیات غیرقابل بازگشت است! با وارد کردن این کد، حساب کاربری شما و تمام اطلاعات مرتبط با آن به طور کامل حذف خواهد شد.' if purpose == 'delete_account' else ''}
+
+این کد به مدت 15 دقیقه معتبر است.
+
+برای بازگشت به سایت، لطفاً به این آدرس مراجعه کنید: {button_url}
+
+نکات امنیتی:
+- این کد را با هیچ‌کس به اشتراک نگذارید.
+- این کد فقط یک بار قابل استفاده است.
+- تیم پشتیبانی هرگز این کد را از شما درخواست نمی‌کند.
+
+© سیستم کوییز آنلاین - {datetime.now().year}
+این یک ایمیل خودکار است، لطفاً به آن پاسخ ندهید.
+    """
 
     try:
         msg = Message(
             subject=subject,
             recipients=[email],
-            body=text_body,  # نسخه متنی
-            html=html_template  # نسخه HTML
+            body=text_body,
+            html=html_content
         )
         mail.send(msg)
         return True
@@ -703,6 +763,97 @@ def edit_profile():
     return render_template('edit_profile.html', user=user)
 
 
+@app.route('/delete_account', methods=['POST'])
+@login_required
+def delete_account():
+    """آغاز روند حذف حساب کاربری با تأیید ایمیل"""
+    user = User.query.get(session['user_id'])
+    if not user:
+        flash('خطا در دریافت اطلاعات کاربر')
+        return redirect(url_for('logout'))
+
+    try:
+        # ایجاد و ارسال کد تأیید به ایمیل کاربر
+        verification_email = user.email
+        code = generate_verification_code(verification_email, purpose="delete_account")
+        if send_verification_email(verification_email, code, purpose="delete_account"):
+            # ذخیره موقت هدف تأیید
+            session['verification_purpose'] = "delete_account"
+            return render_template('verify_email.html', email=verification_email, purpose="delete_account")
+        else:
+            flash('خطا در ارسال ایمیل تأیید. لطفاً دوباره تلاش کنید.')
+            return redirect(url_for('edit_profile'))
+    except Exception as e:
+        print(f"خطا در آغاز فرآیند حذف حساب کاربری: {str(e)}")
+        flash('خطا در پردازش درخواست. لطفاً دوباره تلاش کنید.')
+        return redirect(url_for('edit_profile'))
+
+
+@app.route('/confirm_account_deletion', methods=['POST'])
+@login_required
+def confirm_account_deletion():
+    """تایید و انجام حذف حساب کاربری"""
+    if 'verify_code' in request.form and 'verification_purpose' in session and session[
+        'verification_purpose'] == "delete_account":
+        try:
+            code = request.form['verify_code']
+            user = User.query.get(session['user_id'])
+
+            if not user:
+                flash('خطا در دریافت اطلاعات کاربر')
+                return redirect(url_for('logout'))
+
+            verification_email = user.email
+
+            # بررسی صحت کد
+            if verify_code(verification_email, code, purpose="delete_account"):
+                # حذف تمام داده‌های مرتبط با کاربر
+                try:
+                    # 1. حذف نتایج کوییزها
+                    QuizResult.query.filter_by(user_id=user.id).delete()
+
+                    # 2. حذف پیام‌های تیکت
+                    TicketMessage.query.filter_by(user_id=user.id).delete()
+
+                    # 3. حذف تیکت‌هایی که کاربر فرستنده یا گیرنده آن‌هاست
+                    Ticket.query.filter(
+                        db.or_(
+                            Ticket.user_id == user.id,
+                            Ticket.recipient_id == user.id
+                        )
+                    ).delete()
+
+                    # 4. حذف کدهای تأیید
+                    VerificationCode.query.filter_by(email=user.email).delete()
+
+                    # 5. حذف کاربر
+                    db.session.delete(user)
+                    db.session.commit()
+
+                    # پاکسازی سشن
+                    session.clear()
+                    logout_user()
+
+                    # نمایش پیام موفقیت
+                    flash('حساب کاربری شما با موفقیت حذف شد')
+                    return redirect(url_for('login'))
+                except Exception as e:
+                    db.session.rollback()
+                    print(f"خطا در حذف حساب کاربری: {str(e)}")
+                    flash('خطا در حذف حساب کاربری. لطفاً با پشتیبانی تماس بگیرید.')
+                    return redirect(url_for('edit_profile'))
+            else:
+                flash('کد تأیید نامعتبر یا منقضی شده است. لطفاً دوباره تلاش کنید.')
+                return render_template('verify_email.html', email=verification_email, purpose="delete_account")
+        except Exception as e:
+            print(f"خطا در تأیید کد حذف حساب کاربری: {str(e)}")
+            flash('خطا در تأیید کد. لطفاً دوباره تلاش کنید.')
+            return redirect(url_for('edit_profile'))
+
+    # اگر درخواست نامعتبر بود، کاربر را به صفحه ویرایش پروفایل برگردان
+    return redirect(url_for('edit_profile'))
+
+
 @app.route('/admin/questions', methods=['GET', 'POST'])
 @login_required
 def manage_questions():
@@ -812,7 +963,7 @@ def admin_analytics():
         return redirect(url_for('index'))
 
     # لیست همه کاربران برای جستجو
-    #all_usernames = User.query.filter(User.username != 'admin').all()
+    #all_users = User.query.filter(User.username != 'admin').all()
 
     # دریافت همه دسته‌بندی‌های موجود برای فیلتر
     categories = db.session.query(Question.category).distinct().all()

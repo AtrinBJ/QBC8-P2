@@ -82,6 +82,28 @@
                         </button>
                     </div>
                 </form>
+
+                <!-- بخش حذف حساب کاربری -->
+                <hr class="mt-5 mb-4">
+                <div class="card bg-danger bg-opacity-10 mt-4">
+                    <div class="card-header bg-danger bg-opacity-20">
+                        <h5 class="card-title text-danger mb-0">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                            حذف حساب کاربری
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-danger">هشدار: حذف حساب کاربری غیرقابل بازگشت است و تمام اطلاعات شما از سیستم حذف خواهد شد.</p>
+                        <form method="POST" action="{{ url_for('delete_account') }}" onsubmit="return confirmDelete()">
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-danger">
+                                    <i class="bi bi-trash me-1"></i>
+                                    حذف حساب کاربری
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -106,5 +128,10 @@
             }
         });
     });
+
+    // تابع تایید حذف حساب کاربری
+    function confirmDelete() {
+        return confirm('آیا از حذف حساب کاربری خود اطمینان دارید؟ این عمل غیرقابل بازگشت است و تمام اطلاعات شما حذف خواهد شد.');
+    }
 </script>
 {% endblock %}
