@@ -3,84 +3,123 @@ let currentQuestion = 1;
 let totalQuestions = 0;
 let startTime = Date.now();
 let timer;
-let isQuizActive = false; // متغیر جدید برای تشخیص فعال بودن کوییز
+let isQuizActive = false; // متغیر برای تشخیص فعال بودن کوییز
 
 // اجرای کد پس از لود کامل صفحه
 document.addEventListener('DOMContentLoaded', function () {
     console.log("DOM fully loaded");
     const quizForm = document.getElementById('quizForm');
+
+    // فقط در صفحه کوییز اجرا شود
     if (quizForm) {
-        console.log("Quiz form found");
+        console.log("Quiz form found - initializing quiz...");
         totalQuestions = parseInt(quizForm.dataset.totalQuestions) || 0;
         console.log("Total questions:", totalQuestions);
         isQuizActive = true; // کوییز فعال است
 
-        // افزودن Event Listener به لینک خروج
+        // افزودن Event Listener به لینک‌های خروج
         setupExitConfirmation();
-    } else {
-        console.log("Quiz form not found!");
-    }
 
-    // نمایش اولین سوال
-    showQuestion(1);
+        // نمایش اولین سوال
+        showQuestion(1);
 
-    // افزودن Event Listener به دکمه‌های بعدی و قبلی
-    document.querySelectorAll('.nav-btn').forEach(button => {
-        button.addEventListener('click', function () {
-            const direction = this.getAttribute('data-direction');
-            let newQuestion = direction === 'next' ? currentQuestion + 1 : currentQuestion - 1;
-            if (newQuestion >= 1 && newQuestion <= totalQuestions) {
-                showQuestion(newQuestion);
-            }
+        // افزودن Event Listener به دکمه‌های بعدی و قبلی
+        document.querySelectorAll('.nav-btn').forEach(button => {
+            button.addEventListener('click', function () {
+                const direction = this.getAttribute('data-direction');
+                const targetQuestion = parseInt(this.getAttribute('data-question'));
+
+                if (isNaN(targetQuestion)) {
+                    console.error("Invalid question number");
+                    return;
+                }
+
+                if (direction === 'next') {
+                    // بررسی انتخاب گزینه در سوال فعلی قبل از رفتن به سوال بعد
+                    const currentCard = document.getElementById(`question-${currentQuestion}`);
+                    if (currentCard) {
+                        const selectedOption = currentCard.querySelector('input[type="radio"]:checked');
+                        if (!selectedOption) {
+                            alert('لطفاً یک گزینه را انتخاب کنید');
+                            return;
+                        }
+                    }
+                }
+
+                showQuestion(targetQuestion);
+            });
         });
-    });
 
-    // افزودن Event Listener به دکمه پایان کوییز
-    const finishQuizBtn = document.getElementById('finishQuiz');
-    if (finishQuizBtn) {
-        console.log("Finish quiz button found");
-        finishQuizBtn.addEventListener('click', confirmSubmit);
+        // افزودن Event Listener به دکمه پایان کوییز
+        const finishQuizBtn = document.getElementById('finishQuiz');
+        if (finishQuizBtn) {
+            console.log("Finish quiz button found");
+            finishQuizBtn.addEventListener('click', confirmSubmit);
+        } else {
+            console.warn("Finish quiz button NOT found!");
+        }
+
+        // شروع تایمر برای کوییز (۱۰ دقیقه)
+        startTimer(600);
     } else {
-        console.log("Finish quiz button NOT found!");
+        console.log("Not on quiz page - skipping quiz initialization");
     }
-
-    // شروع تایمر برای کوییز (۱۰ دقیقه)
-    startTimer(600);
 });
 
 // تابع جدید برای تنظیم تأیید خروج
 function setupExitConfirmation() {
-    const logoutLinks = document.querySelectorAll('a[href*="logout"]');
+    console.log("Setting up exit confirmation");
 
-    logoutLinks.forEach(link => {
+    // تنظیم listener برای قبل از بستن صفحه
+    window.addEventListener('beforeunload', function(e) {
+        if (isQuizActive) {
+            e.preventDefault();
+            e.returnValue = 'آیا مطمئن هستید که می‌خواهید از کوییز خارج شوید؟ اطلاعات کوییز ذخیره نخواهد شد.';
+            return e.returnValue;
+        }
+    });
+
+    // تنظیم listener برای لینک‌های خروج و ناوبری
+    document.querySelectorAll('a[href]:not([href^="#"])').forEach(link => {
+        console.log("Adding event listener to link:", link.href);
+
         link.addEventListener('click', function(event) {
             if (isQuizActive) {
                 event.preventDefault();
+                const targetHref = this.href;
+
+                // بررسی آیا لینک logout است
+                const isLogout = targetHref.includes('logout');
+
                 if (confirm('آیا مطمئن هستید که می‌خواهید از کوییز خارج شوید؟ اطلاعات کوییز ذخیره نخواهد شد.')) {
-                    // اگر کاربر تأیید کرد، به صفحه پروفایل هدایت شود
-                    window.location.href = '/profile';
+                    // اگر لینک logout بود به profile هدایت کنیم
+                    if (isLogout) {
+                        console.log("Logout link detected, redirecting to profile instead");
+                        window.location.href = '/profile';
+                    } else {
+                        // در غیر این صورت به آدرس اصلی هدایت می‌شود
+                        window.location.href = targetHref;
+                    }
                 }
-                // اگر کاربر تأیید نکرد، در صفحه کوییز باقی می‌ماند
-            } else {
-                // اگر کوییز فعال نیست، به صورت عادی خارج شود
-                window.location.href = this.href;
             }
         });
+    });
+
+    // به طور خاص برای لینک logout
+    const logoutLinks = document.querySelectorAll('a[href*="logout"]');
+    logoutLinks.forEach(link => {
+        console.log("Found logout link:", link.href);
     });
 }
 
 // تابع نمایش سوال مشخص شده
 function showQuestion(num) {
-    // بررسی انتخاب گزینه در سوال فعلی قبل از رفتن به سوال بعد
-    if (num > currentQuestion) {
-        const currentCard = document.getElementById(`question-${currentQuestion}`);
-        if (currentCard) {
-            const selectedOption = currentCard.querySelector('input[type="radio"]:checked');
-            if (!selectedOption) {
-                alert('لطفاً یک گزینه را انتخاب کنید');
-                return false;
-            }
-        }
+    console.log(`Showing question ${num}`);
+
+    // بررسی معتبر بودن شماره سوال
+    if (num < 1 || num > totalQuestions) {
+        console.error(`Invalid question number: ${num}`);
+        return false;
     }
 
     // مخفی کردن همه سوالات
@@ -92,24 +131,43 @@ function showQuestion(num) {
     const nextCard = document.getElementById(`question-${num}`);
     if (nextCard) {
         nextCard.style.display = 'block';
-        document.getElementById('currentQuestion').textContent = num;
-        document.getElementById('progressBar').style.width = `${(num / totalQuestions) * 100}%`;
+        const currentQuestionElement = document.getElementById('currentQuestion');
+        if (currentQuestionElement) {
+            currentQuestionElement.textContent = num;
+        }
+
+        const progressBar = document.getElementById('progressBar');
+        if (progressBar) {
+            progressBar.style.width = `${(num / totalQuestions) * 100}%`;
+        }
+
         currentQuestion = num;
+        return true;
+    } else {
+        console.error(`Question element #question-${num} not found`);
+        return false;
     }
-    return true;
 }
 
 // تابع تایید ارسال کوییز
 function confirmSubmit() {
     console.log("Confirm submit called");
-    // بررسی پاسخ به سوال آخر
-    const lastCard = document.getElementById(`question-${totalQuestions}`);
-    if (lastCard) {
-        const lastAnswer = lastCard.querySelector('input[type="radio"]:checked');
-        if (!lastAnswer) {
-            alert('لطفاً به سوال آخر پاسخ دهید');
-            return;
+
+    // بررسی پاسخ به همه سوالات
+    let unansweredQuestions = [];
+    for (let i = 1; i <= totalQuestions; i++) {
+        const questionCard = document.getElementById(`question-${i}`);
+        if (questionCard) {
+            const selectedOption = questionCard.querySelector('input[type="radio"]:checked');
+            if (!selectedOption) {
+                unansweredQuestions.push(i);
+            }
         }
+    }
+
+    if (unansweredQuestions.length > 0) {
+        alert(`لطفاً به تمام سوالات پاسخ دهید. سوالات بدون پاسخ: ${unansweredQuestions.join(', ')}`);
+        return;
     }
 
     if (confirm('آیا مطمئن هستید که می‌خواهید کوییز را به پایان برسانید؟')) {
@@ -184,7 +242,8 @@ async function submitQuiz(isTimeout = false) {
         const response = await fetch('/submit_quiz', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
             },
             body: JSON.stringify(submitData)
         });
@@ -202,7 +261,7 @@ async function submitQuiz(isTimeout = false) {
         console.log("Response data:", result);
 
         if (result.success) {
-            showResult(result.score, answered, isTimeout);
+            showResult(result.score, result.correct_count, result.total_questions, isTimeout);
         } else {
             alert('خطا در ثبت نتایج: ' + (result.error || 'خطای نامشخص'));
             isQuizActive = true; // کوییز همچنان فعال است در صورت خطا
@@ -215,12 +274,16 @@ async function submitQuiz(isTimeout = false) {
 }
 
 // تابع نمایش نتیجه کوییز
-function showResult(score, answered, isTimeout) {
-    console.log("Showing result:", score);
+function showResult(score, correctAnswers, totalQCount, isTimeout) {
+    console.log("Showing result:", score, correctAnswers, totalQCount, isTimeout);
 
-    // ایجاد مودال نتیجه با روشی ایمن‌تر
-    if (!document.getElementById('resultModal')) {
-        console.log("Creating result modal");
+    // بررسی وجود مودال نتیجه
+    const resultModal = document.getElementById('resultModal');
+
+    if (!resultModal) {
+        console.log("Result modal not found - creating one");
+
+        // ایجاد مودال نتیجه به صورت پویا
         const modalHTML = `
         <div class="modal fade" id="resultModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
@@ -231,8 +294,8 @@ function showResult(score, answered, isTimeout) {
                     </div>
                     <div class="modal-body text-center">
                         <div id="resultIcon" class="mb-3"></div>
-                        <h3>نمره شما: <span id="scorePercentage"></span>%</h3>
-                        <p>پاسخ‌های صحیح: <span id="correctAnswers"></span> از ${totalQuestions}</p>
+                        <h3>نمره شما: <span id="scorePercentage">${score}</span>%</h3>
+                        <p>پاسخ‌های صحیح: <span id="correctAnswers">${correctAnswers}</span> از ${totalQCount || totalQuestions}</p>
                         <div id="resultMessage" class="mt-3"></div>
                     </div>
                     <div class="modal-footer">
@@ -240,52 +303,32 @@ function showResult(score, answered, isTimeout) {
                     </div>
                 </div>
             </div>
-        </div>
-        `;
+        </div>`;
 
-        // افزودن مودال به DOM
         const modalContainer = document.createElement('div');
         modalContainer.innerHTML = modalHTML;
         document.body.appendChild(modalContainer.firstChild);
 
-        // کمی صبر کنید تا DOM به‌روزرسانی شود
-        setTimeout(() => {
-            updateModalContent(score, answered, isTimeout);
-        }, 100);
+        setTimeout(updateModalContent, 100, score, correctAnswers, totalQCount, isTimeout);
     } else {
-        // مودال قبلاً ایجاد شده، فقط محتوا را به‌روز کنید
-        updateModalContent(score, answered, isTimeout);
+        updateModalContent(score, correctAnswers, totalQCount, isTimeout);
     }
 }
 
-// تابع جدید برای به‌روزرسانی محتوای مودال
-function updateModalContent(score, answered, isTimeout) {
+// تابع به‌روزرسانی محتوای مودال
+function updateModalContent(score, correctAnswers, totalQCount, isTimeout) {
     console.log("Updating modal content");
 
-    // بررسی وجود عناصر قبل از دسترسی به آنها
+    // به‌روزرسانی محتوای مودال
+    const scoreElement = document.getElementById('scorePercentage');
+    const correctAnswersElement = document.getElementById('correctAnswers');
     const resultIcon = document.getElementById('resultIcon');
     const resultMessage = document.getElementById('resultMessage');
-    const scorePercentage = document.getElementById('scorePercentage');
-    const correctAnswersElement = document.getElementById('correctAnswers');
 
-    if (!resultIcon || !resultMessage || !scorePercentage || !correctAnswersElement) {
-        console.error("Required modal elements not found!");
-        console.log("resultIcon exists:", !!resultIcon);
-        console.log("resultMessage exists:", !!resultMessage);
-        console.log("scorePercentage exists:", !!scorePercentage);
-        console.log("correctAnswers exists:", !!correctAnswersElement);
+    if (scoreElement) scoreElement.textContent = score;
+    if (correctAnswersElement) correctAnswersElement.textContent = correctAnswers;
 
-        // نمایش نتیجه به صورت alert در صورت بروز خطا
-        alert(`نمره شما: ${score}%`);
-        setTimeout(() => {
-            window.location.href = '/profile';
-        }, 2000);
-        return;
-    }
-
-    const correctAnswers = Math.floor((score / 100) * totalQuestions);
-
-    // تعیین وضعیت نتیجه با بررسی وجود عناصر
+    // تعیین وضعیت نتیجه
     if (resultIcon && resultMessage) {
         if (score >= 80) {
             resultIcon.innerHTML = '<i class="bi bi-emoji-smile display-1 text-success"></i>';
@@ -302,39 +345,26 @@ function updateModalContent(score, answered, isTimeout) {
         }
 
         // اضافه کردن پیام مربوط به اتمام زمان
-        if (isTimeout && resultMessage) {
+        if (isTimeout) {
             resultMessage.textContent = 'زمان کوییز به پایان رسید. ' + resultMessage.textContent;
         }
     }
 
-    // به‌روزرسانی اطلاعات در مودال
-    if (scorePercentage) scorePercentage.textContent = score;
-    if (correctAnswersElement) correctAnswersElement.textContent = correctAnswers;
-
     // نمایش مودال نتیجه
     try {
-        if (typeof bootstrap !== 'undefined') {
-            const resultModal = document.getElementById('resultModal');
-            if (resultModal) {
-                const bsModal = new bootstrap.Modal(resultModal);
-                bsModal.show();
+        const resultModal = document.getElementById('resultModal');
+        if (resultModal) {
+            const bsModal = new bootstrap.Modal(resultModal);
+            bsModal.show();
 
-                // هدایت خودکار به صفحه پروفایل بعد از 4 ثانیه
-                setTimeout(() => {
-                    window.location.href = '/profile';
-                }, 4000);
-            } else {
-                console.error("Modal element not found");
-                alert(`نمره شما: ${score}%`);
-                // هدایت فوری به صفحه پروفایل در صورت عدم وجود مودال
-                setTimeout(() => {
-                    window.location.href = '/profile';
-                }, 2000);
-            }
+            // هدایت خودکار به صفحه پروفایل بعد از 5 ثانیه
+            setTimeout(() => {
+                window.location.href = '/profile';
+            }, 5000);
         } else {
-            console.error("Bootstrap not loaded");
+            console.error("Modal element not found after creation");
             alert(`نمره شما: ${score}%`);
-            // هدایت فوری به صفحه پروفایل در صورت عدم وجود بوت‌استرپ
+            // هدایت فوری به صفحه پروفایل در صورت عدم وجود مودال
             setTimeout(() => {
                 window.location.href = '/profile';
             }, 2000);
@@ -352,18 +382,52 @@ function updateModalContent(score, answered, isTimeout) {
 // تابع تایمر کوییز
 function startTimer(duration) {
     let timeLeft = duration;
+    const timerElement = document.getElementById('timer');
+
+    if (!timerElement) {
+        console.error("Timer element not found");
+        return;
+    }
+
+    // نمایش اولیه زمان
+    updateTimerDisplay(timeLeft, timerElement);
+
     timer = setInterval(() => {
-        let minutes = parseInt(timeLeft / 60, 10);
-        let seconds = parseInt(timeLeft % 60, 10);
-        minutes = minutes < 10 ? "0" + minutes : minutes;
-        seconds = seconds < 10 ? "0" + seconds : seconds;
-        const timerElement = document.getElementById('timer');
-        if (timerElement) {
-            timerElement.textContent = minutes + ":" + seconds;
-        }
-        if (--timeLeft < 0) {
+        timeLeft--;
+
+        if (timeLeft < 0) {
             clearInterval(timer);
+            alert('زمان کوییز به پایان رسید!');
             submitQuiz(true);
+            return;
         }
+
+        updateTimerDisplay(timeLeft, timerElement);
     }, 1000);
+}
+
+// تابع به‌روزرسانی نمایش تایمر
+function updateTimerDisplay(timeLeft, timerElement) {
+    const minutes = Math.floor(timeLeft / 60);
+    const seconds = timeLeft % 60;
+
+    // فرمت دو رقمی
+    const formattedMinutes = String(minutes).padStart(2, '0');
+    const formattedSeconds = String(seconds).padStart(2, '0');
+
+    timerElement.textContent = `${formattedMinutes}:${formattedSeconds}`;
+
+    // تغییر رنگ تایمر در زمان‌های بحرانی
+    if (timeLeft <= 60) { // یک دقیقه آخر
+        timerElement.classList.add('text-danger');
+        timerElement.classList.add('fw-bold');
+
+        if (timeLeft <= 10) { // ده ثانیه آخر
+            if (timeLeft % 2 === 0) {
+                timerElement.style.opacity = '1';
+            } else {
+                timerElement.style.opacity = '0.5';
+            }
+        }
+    }
 }

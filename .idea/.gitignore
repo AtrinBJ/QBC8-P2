@@ -1,8 +1,13 @@
 # Default ignored files
 /shelf/
 /workspace.xml
+/dataSources/6edf2553-d565-47ce-9acd-84b0406471a3.xml
+/dataSources.local.xml
+/dataSources.xml
+/dataSources/6edf2553-d565-47ce-9acd-84b0406471a3/storage_v2/_src_/schema/main.uQUzAA.meta
 /misc.xml
 /modules.xml
 /inspectionProfiles/profiles_settings.xml
+/PythonProject3.iml
 /QBC8-P2.iml
 /vcs.xml

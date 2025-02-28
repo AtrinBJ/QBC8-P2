@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}تأیید ایمیل{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h3 class="card-title text-center mb-4">
+                    {% if purpose == "register" %}
+                        تأیید ایمیل برای ثبت نام
+                    {% elif purpose == "login" %}
+                        تأیید ایمیل برای ورود
+                    {% elif purpose == "delete_account" %}
+                        تأیید حذف حساب کاربری
+                    {% else %}
+                        تأیید ایمیل برای به‌روزرسانی
+                    {% endif %}
+                </h3>
+
+                {% if purpose == "delete_account" %}
+                <div class="alert alert-danger mb-4">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-exclamation-triangle-fill me-3 fs-4"></i>
+                        <div>
+                            <p class="mb-0"><strong>هشدار: این عملیات غیرقابل بازگشت است!</strong></p>
+                            <p class="mb-0">با تأیید این کد، حساب کاربری شما و تمام اطلاعات مربوط به آن به طور کامل حذف خواهد شد.</p>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="alert alert-info mb-4">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-info-circle-fill me-3 fs-4"></i>
+                        <div>
+                            <p class="mb-0">کد تأیید 6 رقمی به ایمیل زیر ارسال شده است:</p>
+                            <p class="mb-0"><strong>{{ email }}</strong></p>
+                            <p class="mt-2 mb-0">لطفاً کد دریافتی را وارد کنید.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <form method="POST" action="{% if purpose == 'delete_account' %}{{ url_for('confirm_account_deletion') }}{% endif %}">
+                    <input type="hidden" name="verify_email" value="1">
+
+                    <div class="mb-4">
+                        <label for="verify_code" class="form-label">کد تأیید</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-transparent border-end-0">
+                                <i class="bi bi-shield-lock"></i>
+                            </span>
+                            <input type="text" class="form-control border-start-0 text-center fs-5"
+                                   id="verify_code" name="verify_code" maxlength="6"
+                                   pattern="[0-9]{6}" placeholder="______" required>
+                        </div>
+                        <div class="text-center mt-2">
+                            <div id="countdown" class=""></div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn {% if purpose == 'delete_account' %}btn-danger{% else %}btn-primary{% endif %}">
+                            <i class="bi bi-check-circle me-2"></i>
+                            تأیید کد
+                        </button>
+                    </div>
+                </form>
+
+                <div class="text-center mt-3">
+                    <form method="POST">
+                        <input type="hidden" name="resend_code" value="1">
+                        <button type="submit" id="resendButton" class="btn btn-link" disabled>
+                            ارسال مجدد کد
+                        </button>
+                    </form>
+                </div>
+
+                <div class="text-center mt-3">
+                    {% if purpose == "register" %}
+                        <a href="{{ url_for('register') }}" class="btn btn-sm btn-outline-secondary">
+                            بازگشت به صفحه ثبت نام
+                        </a>
+                    {% elif purpose == "login" %}
+                        <a href="{{ url_for('login') }}" class="btn btn-sm btn-outline-secondary">
+                            بازگشت به صفحه ورود
+                        </a>
+                    {% elif purpose == "delete_account" %}
+                        <a href="{{ url_for('edit_profile') }}" class="btn btn-sm btn-outline-secondary">
+                            انصراف و بازگشت
+                        </a>
+                    {% else %}
+                        <a href="{{ url_for('edit_profile') }}" class="btn btn-sm btn-outline-secondary">
+                            بازگشت به صفحه ویرایش اطلاعات
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // تنظیم شمارنده معکوس برای ارسال مجدد (2 دقیقه)
+        let countdownTime = 120;
+        const countdownElement = document.getElementById('countdown');
+        const resendButton = document.getElementById('resendButton');
+
+        // تابع بروزرسانی شمارنده
+        function updateCountdown() {
+            const minutes = Math.floor(countdownTime / 60);
+            const seconds = countdownTime % 60;
+
+            countdownElement.textContent = `امکان ارسال مجدد کد تا ${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+
+            if (countdownTime <= 0) {
+                clearInterval(timer);
+                countdownElement.textContent = 'می‌توانید کد را مجدداً دریافت کنید';
+                resendButton.disabled = false;
+            } else {
+                countdownTime--;
+            }
+        }
+
+        // شروع شمارنده
+        updateCountdown();
+        const timer = setInterval(updateCountdown, 1000);
+
+        // تنظیم رفتار ورودی کد (فقط اعداد و حرکت خودکار)
+        const codeInput = document.getElementById('verify_code');
+        codeInput.addEventListener('input', function() {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+    });
+</script>
+{% endblock %}
