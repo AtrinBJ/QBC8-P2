@@ -232,27 +232,30 @@ quiz-system/
 ----------------------------Main Files Description-------------------------------------
 
 app.py: The main application file containing all routes, data models, and core logic. This file implements all core system operations including authentication, quiz management, and ticket system.
+
 static/: Contains static files such as:
 
 css/: Stylesheet files for UI
-js/: JavaScript files for user interaction and AJAX functionality
-images/: Images and icons used in the site
-uploads/: Storage location for user-uploaded files
 
+js/: JavaScript files for user interaction and AJAX functionality
+
+images/: Images and icons used in the site
+
+uploads/: Storage location for user-uploaded files
 
 templates/: HTML templates for rendering web pages, including:
 
-Various system sections (login, registration, profile, quiz)
-Admin section (question management and analytics)
-Ticket system for support
-Custom-designed error pages
+1.Various system sections (login, registration, profile, quiz)
+2.Admin section (question management and analytics)
+3.Ticket system for support
+4.Custom-designed error pages
 
 
 Helper Scripts:
 
-create_admin.py: Creates the initial admin user
-create_db.py: Creates database tables
-migrate_attachments.py and migrate_tickets.py: Migration scripts for updating database structure
+1.create_admin.py: Creates the initial admin user
+2.create_db.py: Creates database tables
+3.migrate_attachments.py and migrate_tickets.py: Migration scripts for updating database structure
 
 
 
@@ -261,38 +264,38 @@ This project is an online quiz system with the following features:
 
 User Management:
 
-Registration and login
-Email verification
-Profile editing
-Account management
+1.Registration and login
+2.Email verification
+3.Profile editing
+4.Account management
 
 
 Quiz System:
 
-Various question categories
-Randomized quiz display
-Calculation and storage of user scores
-Results display and progress statistics
+1.Various question categories
+2.Randomized quiz display
+3.Calculation and storage of user scores
+4.Results display and progress statistics
 
 
 Analytics Dashboard:
 
-User progress charts
-Category and difficulty level statistics
-Reporting and user performance analysis
+1.User progress charts
+2.Category and difficulty level statistics
+3.Reporting and user performance analysis
 
 
 Ticket System:
 
-Sending support tickets
-Responding to tickets
-File attachments for tickets
-Ticket status management
+1.Sending support tickets
+2.Responding to tickets
+3.File attachments for tickets
+4.Ticket status management
 
 
 Admin Panel:
 
-Question management (add, edit, delete)
-Importing questions from external API
-User management
-Viewing and responding to tickets
+1.Question management (add, edit, delete)
+2.Importing questions from external API
+3.User management
+4.Viewing and responding to tickets
