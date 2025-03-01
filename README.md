@@ -134,6 +134,35 @@ Tickets & Messages Tables: Support ticket system
 VerificationCodes Table: Email verification system
 
 
+--------------------------------Development Notes----------------------------------------
+
+The application uses Flask's development server by default
+For production deployment, use a WSGI server like Gunicorn
+Email verification requires proper SMTP settings in app.py
+For larger deployments, consider migrating to PostgreSQL
+The static folder contains all CSS, JS, and image assets
+Templates are organized by feature area (admin, tickets, errors)
+
+--------------------------------Future Improvements--------------------------------------
+
+Internationalization support for multiple languages
+Advanced question types (matching, fill-in-the-blank)
+Social login integration (Google, GitHub, etc.)
+Real-time notifications using WebSockets
+Mobile application using the existing backend API
+Enhanced admin analytics with machine learning insights
+Performance optimizations for large question databases
+API endpoints for third-party integrations
+
+License
+This project is licensed under the MIT License - see the LICENSE file for details.
+Credits
+Developed as part of the Quera.org,QBC8-Bootcamps,python-Alpha-Bootcamp,2nd-Group, Fall 2024
+
+
+
+
+
 (((((((
 ------------------------------Directory and File Structure----------------------------
 
