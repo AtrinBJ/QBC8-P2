@@ -155,9 +155,11 @@ Performance optimizations for large question databases
 API endpoints for third-party integrations
 
 License
-This project is licensed under the MIT License - see the LICENSE file for details.
-Credits
-Developed as part of the Quera.org,QBC8-Bootcamps,python-Alpha-Bootcamp,2nd-Group, Fall 2024
+
+------This project is licensed under the MIT License - see the LICENSE file for details.
+Credits------
+
+------Developed as part of the Quera.org,QBC8-Bootcamps,python-Alpha-Bootcamp,2nd-Group, Fall 2024------
 
 
 
