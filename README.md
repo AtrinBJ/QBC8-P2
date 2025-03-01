@@ -220,6 +220,7 @@ quiz-system/
 │
 ├── logs/                    # Log files directory
 │
+├── Setup.bat                # Setup things needed and run the system script 
 ├── create_admin.py          # Admin user creation script
 ├── create_db.py             # Database creation script
 ├── migrate_attachments.py   # Migration script for ticket attachments
