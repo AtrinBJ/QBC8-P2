@@ -168,6 +168,8 @@ Credits------
 (((((((
 ------------------------------Directory and File Structure----------------------------
 
+-------See code version for a better view------
+
 quiz-system/
 │
 ├── app.py                   # Main application file - contains routes and core settings
