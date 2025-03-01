@@ -168,7 +168,7 @@ Credits------
 (((((((
 ------------------------------Directory and File Structure----------------------------
 
--------See code version for a better view------
+-------See the code version for a better view------
 
 quiz-system/
 │
