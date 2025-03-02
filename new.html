@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+
+{% block title %}ایجاد تیکت جدید{% endblock %}
+
+{% block custom_css %}
+<style>
+    .new-ticket-container {
+        background-color: rgba(0, 0, 0, 0.6);
+        border-radius: 10px;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+    .card {
+        background-color: rgba(30, 30, 40, 0.7);
+        border: 1px solid rgba(100, 100, 255, 0.2);
+        border-radius: 10px;
+        transition: all 0.3s ease;
+    }
+
+    .form-control {
+        background-color: rgba(40, 42, 54, 0.7);
+        color: #f8f8f2;
+        border: 1px solid rgba(100, 100, 255, 0.3);
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus {
+        background-color: rgba(40, 42, 54, 0.9);
+        color: #f8f8f2;
+        border-color: #bd93f9;
+        box-shadow: 0 0 0 0.25rem rgba(189, 147, 249, 0.25);
+    }
+
+    .form-label {
+        color: #8be9fd;
+        font-weight: bold;
+    }
+
+    .form-select {
+        background-color: rgba(40, 42, 54, 0.7);
+        color: #f8f8f2;
+        border: 1px solid rgba(100, 100, 255, 0.3);
+    }
+
+    .submit-btn {
+        background-color: #6272a4;
+        border-color: #6272a4;
+        transition: all 0.3s ease;
+    }
+
+    .submit-btn:hover {
+        background-color: #bd93f9;
+        border-color: #bd93f9;
+        transform: translateY(-2px);
+    }
+
+    .cancel-btn {
+        background-color: rgba(255, 85, 85, 0.7);
+        border-color: rgba(255, 85, 85, 0.7);
+        transition: all 0.3s ease;
+    }
+
+    .cancel-btn:hover {
+        background-color: rgba(255, 85, 85, 1);
+        border-color: rgba(255, 85, 85, 1);
+        transform: translateY(-2px);
+    }
+
+    .form-text {
+        color: rgba(248, 248, 242, 0.7);
+    }
+
+    /* استایل برای بخش آپلود فایل */
+    .file-upload-section {
+        background-color: rgba(40, 42, 54, 0.5);
+        border-radius: 8px;
+        padding: 15px;
+        margin-top: 20px;
+        border: 1px dashed rgba(139, 233, 253, 0.3);
+    }
+
+    .file-type-icon {
+        font-size: 1.5rem;
+        margin-right: 8px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container new-ticket-container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="card-title mb-4">
+                        <i class="bi bi-ticket-perforated-fill me-2"></i>
+                        ایجاد تیکت جدید
+                    </h3>
+
+                    <form method="POST" action="{{ url_for('new_ticket') }}" enctype="multipart/form-data">
+                        {% if is_admin %}
+                        <!-- انتخاب کاربر (فقط برای ادمین) -->
+                        <div class="mb-3">
+                            <label for="recipient_id" class="form-label">ارسال تیکت به کاربر</label>
+                            <select class="form-select" id="recipient_id" name="recipient_id" required>
+                                <option value="" disabled selected>یک کاربر را انتخاب کنید</option>
+                                {% for user in users %}
+                                <option value="{{ user.id }}">{{ user.username }} ({{ user.email }})</option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">کاربری که می‌خواهید تیکت را برای او ارسال کنید انتخاب کنید.</div>
+                        </div>
+                        {% endif %}
+
+                        <div class="mb-3">
+                            <label for="title" class="form-label">عنوان تیکت</label>
+                            <input type="text" class="form-control" id="title" name="title" required
+                                  placeholder="مثال: مشکل در ورود به سیستم" maxlength="100">
+                            <div class="form-text">عنوان کوتاه و مشخصی برای تیکت خود انتخاب کنید.</div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="message" class="form-label">متن پیام</label>
+                            <textarea class="form-control" id="message" name="message" rows="6" required
+                                     placeholder="لطفاً مشکل یا درخواست خود را به صورت کامل توضیح دهید..."></textarea>
+                            <div class="form-text">جزئیات کافی را ارائه دهید تا بتوانیم به شما بهتر کمک کنیم.</div>
+                        </div>
+
+                        <!-- بخش آپلود فایل -->
+                        <div class="file-upload-section mb-4">
+                            <label for="file" class="form-label d-flex align-items-center">
+                                <i class="bi bi-paperclip file-type-icon"></i>
+                                پیوست فایل (اختیاری)
+                            </label>
+                            <input type="file" class="form-control" id="file" name="file">
+                            <div class="form-text mt-2">
+                                <i class="bi bi-info-circle me-1"></i>
+                                فرمت‌های مجاز: JPG, PNG, GIF, PDF, DOC, DOCX, XLS, XLSX, TXT (حداکثر 5MB)
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('tickets_list') }}" class="btn btn-danger cancel-btn">
+                                <i class="bi bi-x-circle me-1"></i>
+                                انصراف
+                            </a>
+                            <button type="submit" class="btn btn-primary submit-btn">
+                                <i class="bi bi-send me-1"></i>
+                                ارسال تیکت
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
