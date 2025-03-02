@@ -1,0 +1,699 @@
+{% extends "base.html" %}
+
+{% block title %}مدیریت سوالات{% endblock %}
+
+{% block custom_css %}
+<style>
+    /* استایل‌های بهبود یافته برای پنل مدیریت سوالات */
+    .admin-container {
+        background-color: rgba(0, 0, 0, 0.6);
+        border-radius: 10px;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+    .card {
+        background-color: rgba(30, 30, 40, 0.7);
+        border: 1px solid rgba(100, 100, 255, 0.2);
+        border-radius: 10px;
+        transition: all 0.3s ease;
+        margin-bottom: 20px;
+    }
+
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    .card-title {
+        color: #8be9fd;
+        font-weight: bold;
+        border-bottom: 1px solid rgba(139, 233, 253, 0.3);
+        padding-bottom: 10px;
+    }
+
+    /* استایل فرم‌ها */
+    .form-control, .form-select {
+        background-color: rgba(40, 42, 54, 0.7);
+        color: #f8f8f2;
+        border: 1px solid rgba(100, 100, 255, 0.3);
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus, .form-select:focus {
+        background-color: rgba(40, 42, 54, 0.9);
+        color: #f8f8f2;
+        border-color: #bd93f9;
+        box-shadow: 0 0 0 0.25rem rgba(189, 147, 249, 0.25);
+    }
+
+    .form-control::placeholder {
+        color: rgba(248, 248, 242, 0.5);
+    }
+
+    .form-select option {
+        background-color: #282a36;
+        color: #f8f8f2;
+    }
+
+    /* رنگ‌بندی جدول */
+    .table {
+        color: #f8f8f2;
+        background-color: rgba(40, 42, 54, 0.7);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .table th {
+        background-color: rgba(68, 71, 90, 0.8);
+        color: #8be9fd;
+        border-color: rgba(98, 114, 164, 0.4);
+    }
+
+    .table td {
+        border-color: rgba(98, 114, 164, 0.2);
+        vertical-align: middle;
+    }
+
+    /* استایل دکمه‌ها */
+    .btn-primary {
+        background-color: #6272a4;
+        border-color: #6272a4;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary:hover {
+        background-color: #bd93f9;
+        border-color: #bd93f9;
+        transform: translateY(-2px);
+    }
+
+    .btn-danger {
+        background-color: rgba(255, 85, 85, 0.7);
+        border-color: rgba(255, 85, 85, 0.7);
+        transition: all 0.3s ease;
+    }
+
+    .btn-danger:hover {
+        background-color: rgba(255, 85, 85, 1);
+        border-color: rgba(255, 85, 85, 1);
+        transform: translateY(-2px);
+    }
+
+    .btn-success {
+        background-color: rgba(80, 250, 123, 0.7);
+        border-color: rgba(80, 250, 123, 0.7);
+        color: #282a36;
+        transition: all 0.3s ease;
+    }
+
+    .btn-success:hover {
+        background-color: rgba(80, 250, 123, 1);
+        border-color: rgba(80, 250, 123, 1);
+        color: #282a36;
+        transform: translateY(-2px);
+    }
+
+    .btn-info {
+        background-color: rgba(139, 233, 253, 0.7);
+        border-color: rgba(139, 233, 253, 0.7);
+        color: #282a36;
+        transition: all 0.3s ease;
+    }
+
+    .btn-info:hover {
+        background-color: rgba(139, 233, 253, 1);
+        border-color: rgba(139, 233, 253, 1);
+        color: #282a36;
+        transform: translateY(-2px);
+    }
+
+    /* استایل مودال ویرایش */
+    .modal-content {
+        background-color: rgba(40, 42, 54, 0.95);
+        border: 1px solid rgba(100, 100, 255, 0.3);
+        border-radius: 10px;
+        color: #f8f8f2;
+    }
+
+    .modal-header {
+        border-bottom: 1px solid rgba(100, 100, 255, 0.2);
+    }
+
+    .modal-footer {
+        border-top: 1px solid rgba(100, 100, 255, 0.2);
+    }
+
+    /* استایل برای دکمه افزودن گزینه غلط */
+    .add-option-btn {
+        padding: 5px 10px;
+        font-size: 0.875rem;
+    }
+
+    /* استایل تابلوی اطلاعات */
+    .info-box {
+        background-color: rgba(139, 233, 253, 0.1);
+        border: 1px solid rgba(139, 233, 253, 0.3);
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+
+    .info-box i {
+        color: #8be9fd;
+        font-size: 1.5rem;
+        margin-left: 10px;
+    }
+
+    /* استایل برای تعداد سوالات */
+    .question-count-badge {
+        background-color: #6272a4;
+        color: #f8f8f2;
+        font-size: 0.9rem;
+        padding: 5px 10px;
+        border-radius: 20px;
+        margin-right: 10px;
+    }
+
+    /* استایل برای جستجو */
+    .search-box {
+        position: relative;
+        margin-bottom: 20px;
+    }
+
+    .search-box input {
+        padding-right: 40px;
+    }
+
+    .search-box i {
+        position: absolute;
+        right: 15px;
+        top: 10px;
+        color: rgba(248, 248, 242, 0.5);
+    }
+
+    /* استایل برای عملیات‌های ردیف */
+    .action-btns .btn {
+        margin-left: 5px;
+        padding: 5px 10px;
+        font-size: 0.875rem;
+    }
+
+    .question-text {
+        direction: ltr;
+        text-align: left;
+        unicode-bidi: embed;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container admin-container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>
+            <i class="bi bi-question-diamond-fill me-2"></i>
+            مدیریت سوالات
+        </h2>
+        <span class="question-count-badge">
+            تعداد کل سوالات: {{ questions|length }}
+        </span>
+    </div>
+
+    <!-- تابلوی اطلاعات -->
+    <div class="info-box d-flex align-items-center">
+        <i class="bi bi-info-circle"></i>
+        <div>
+            در این بخش می‌توانید سوالات کوییز را اضافه، ویرایش یا حذف کنید. برای هر سوال می‌توانید یک پاسخ صحیح و حداقل سه گزینه نادرست تعریف نمایید.
+        </div>
+    </div>
+
+    <!-- فرم افزودن سوال جدید -->
+    <div class="card">
+        <div class="card-body">
+            <h3 class="card-title">
+                <i class="bi bi-plus-circle me-2"></i>
+                افزودن سوال جدید
+            </h3>
+            <form method="POST" action="{{ url_for('manage_questions') }}" id="addQuestionForm">
+                <div class="mb-3">
+                    <label for="category" class="form-label">دسته‌بندی</label>
+                    <div class="input-group">
+                        <select class="form-select" id="category" name="category" required>
+                            <option value="">انتخاب دسته‌بندی...</option>
+                            {% for category in categories %}
+                            <option value="{{ category}}">{{ category }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="button" class="btn btn-info" id="add-category-btn">
+                            <i class="bi bi-plus"></i>
+                            افزودن دسته‌بندی جدید
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="question_text" class="form-label">متن سوال</label>
+                    <textarea class="form-control" id="question_text" name="question_text" rows="3" required></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label for="correct_answer" class="form-label">پاسخ صحیح</label>
+                    <input type="text" class="form-control" id="correct_answer" name="correct_answer" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label d-flex justify-content-between">
+                        <span>گزینه‌های نادرست</span>
+                        <button type="button" class="btn btn-sm btn-primary add-option-btn" id="add-wrong-option">
+                            <i class="bi bi-plus"></i>
+                            افزودن گزینه
+                        </button>
+                    </label>
+                    <div id="wrong_answers_container">
+                        <input type="text" class="form-control mb-2" name="wrong_answers[]" required>
+                        <input type="text" class="form-control mb-2" name="wrong_answers[]" required>
+                        <input type="text" class="form-control mb-2" name="wrong_answers[]" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-success">
+                    <i class="bi bi-plus-circle"></i>
+                    افزودن سوال
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- دکمه دریافت سوالات از API -->
+    <div class="card">
+        <div class="card-body">
+            <h3 class="card-title">
+                <i class="bi bi-cloud-download me-2"></i>
+                دریافت سوالات از API
+            </h3>
+            <p class="text-light mb-3">با استفاده از این قابلیت می‌توانید سوالات آماده را از منبع خارجی دریافت کنید.</p>
+            <button id="import-questions" class="btn btn-primary">
+                <i class="bi bi-cloud-download"></i>
+                دریافت سوالات جدید
+            </button>
+        </div>
+    </div>
+    
+
+<!-- لیست سوالات موجود -->
+<div class="card">
+    <div class="card-body">
+        <h3 class="card-title">
+            <i class="bi bi-list-check me-2"></i>
+            لیست سوالات
+        </h3>
+        <div class="table-responsive">
+            <!-- جستجوی سوالات -->
+            <div class="search-box d-flex align-items-center">
+            <!-- فیلد انتخاب دسته‌بندی -->
+            <select id="categorySearch" class="form-control me-2">
+            <option value="">انتخاب براساس دسته‌بندی</option>
+            {% for category in categories %}
+            <option value="{{ category }}">{{ category|safe }}</option>
+            {% endfor %}
+            </select>
+    
+    <input type="text" id="questionSearch" class="form-control me-2" placeholder="جستجو در لیست سوالات...">
+</div>
+
+            <table class="table" id="questionsTable">
+                <thead>
+                    <tr>
+                        <th width="15%">دسته‌بندی</th>
+                        <th width="35%">سوال</th>
+                        <th width="25%">پاسخ صحیح</th>
+                        <th width="25%">عملیات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for question in questions %}
+                    <tr id="question-{{ question.id }}" data-category="{{ question.category }}" data-question="{{ question.question_text }}" data-correct="{{ question.correct_answer }}" data-wrong="{{ question.wrong_answers }}">
+                        <td>{{ question.category | safe }}</td>
+                        <td dir="ltr" class="question-text">{{ question.question_text|safe }}</td>
+                        <td>{{ question.correct_answer|safe }}</td>
+                        <td class="action-btns">
+                            <button class="btn btn-info edit-question" data-question-id="{{ question.id }}">
+                                <i class="bi bi-pencil"></i>
+                                ویرایش
+                            </button>
+                            <button class="btn btn-danger" onclick="deleteQuestion({{ question.id }})">
+                                <i class="bi bi-trash"></i>
+                                حذف
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- مودال ویرایش سوال -->
+<div class="modal fade" id="editQuestionModal" tabindex="-1" aria-labelledby="editQuestionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editQuestionModalLabel">ویرایش سوال</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editQuestionForm">
+                    <input type="hidden" id="edit_question_id" name="question_id">
+
+                    <div class="mb-3">
+                        <label for="edit_category" class="form-label">دسته‌بندی</label>
+                        <select class="form-select" id="edit_category" name="category" required>
+                            {% for category in categories %}
+                            <option value="{{ category|safe }}">{{ category|safe }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="edit_question_text" class="form-label">متن سوال</label>
+                        <textarea class="form-control" id="edit_question_text" name="question_text" rows="3" required></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="edit_correct_answer" class="form-label">پاسخ صحیح</label>
+                        <input type="text" class="form-control" id="edit_correct_answer" name="correct_answer" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label d-flex justify-content-between">
+                            <span>گزینه‌های نادرست</span>
+                            <button type="button" class="btn btn-sm btn-primary add-option-btn" id="edit-add-wrong-option">
+                                <i class="bi bi-plus"></i>
+                                افزودن گزینه
+                            </button>
+                        </label>
+                        <div id="edit_wrong_answers_container">
+                            <!-- گزینه‌های نادرست به صورت پویا اینجا اضافه می‌شوند -->
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button>
+                <button type="button" class="btn btn-primary" id="saveQuestionChanges">ذخیره تغییرات</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript برای مدیریت ویرایش سوالات -->
+{% block custom_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // افزودن دسته‌بندی جدید
+    document.getElementById('add-category-btn').addEventListener('click', function() {
+        const newCategory = prompt('نام دسته‌بندی جدید را وارد کنید:');
+        if (newCategory && newCategory.trim()) {
+            const categorySelect = document.getElementById('category');
+
+            // بررسی تکراری نبودن دسته‌بندی
+            let exists = false;
+            for (let i = 0; i < categorySelect.options.length; i++) {
+                if (categorySelect.options[i].value === newCategory.trim()) {
+                    exists = true;
+                    break;
+                }
+            }
+
+            if (!exists) {
+                const option = document.createElement('option');
+                option.value = newCategory.trim();
+                option.text = newCategory.trim();
+                categorySelect.add(option);
+
+                // اضافه کردن به لیست دسته‌بندی‌های ویرایش نیز
+                const editCategorySelect = document.getElementById('edit_category');
+                const editOption = document.createElement('option');
+                editOption.value = newCategory.trim();
+                editOption.text = newCategory.trim();
+                editCategorySelect.add(editOption);
+            }
+
+            // انتخاب دسته‌بندی جدید
+            categorySelect.value = newCategory.trim();
+        }
+    });
+
+    // افزودن گزینه‌های نادرست بیشتر به فرم اضافه کردن سوال
+    document.getElementById('add-wrong-option').addEventListener('click', function() {
+        const container = document.getElementById('wrong_answers_container');
+        const newInput = document.createElement('input');
+        newInput.type = 'text';
+        newInput.className = 'form-control mb-2';
+        newInput.name = 'wrong_answers[]';
+        newInput.required = true;
+        container.appendChild(newInput);
+    });
+
+    // افزودن گزینه‌های نادرست بیشتر به فرم ویرایش سوال
+    document.getElementById('edit-add-wrong-option').addEventListener('click', function() {
+        const container = document.getElementById('edit_wrong_answers_container');
+        const newInput = document.createElement('input');
+        newInput.type = 'text';
+        newInput.className = 'form-control mb-2';
+        newInput.name = 'edit_wrong_answers[]';
+        newInput.required = true;
+        container.appendChild(newInput);
+    });
+
+    // ویرایش سوال
+    const editButtons = document.querySelectorAll('.edit-question');
+    const editModal = new bootstrap.Modal(document.getElementById('editQuestionModal'));
+
+    editButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const questionId = this.getAttribute('data-question-id');
+            const row = document.getElementById('question-' + questionId);
+
+            // پر کردن فرم ویرایش با مقادیر فعلی
+            document.getElementById('edit_question_id').value = questionId;
+            document.getElementById('edit_category').value = row.getAttribute('data-category');
+            document.getElementById('edit_question_text').value = row.getAttribute('data-question');
+            document.getElementById('edit_correct_answer').value = row.getAttribute('data-correct');
+
+            // پر کردن گزینه‌های نادرست
+            const wrongAnswersContainer = document.getElementById('edit_wrong_answers_container');
+            wrongAnswersContainer.innerHTML = ''; // پاک کردن گزینه‌های قبلی
+
+            const wrongAnswers = JSON.parse(row.getAttribute('data-wrong'));
+            wrongAnswers.forEach(answer => {
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.className = 'form-control mb-2';
+                input.name = 'edit_wrong_answers[]';
+                input.required = true;
+                input.value = answer;
+                wrongAnswersContainer.appendChild(input);
+            });
+
+            // نمایش مودال
+            editModal.show();
+        });
+    });
+
+    // ذخیره تغییرات سوال
+    document.getElementById('saveQuestionChanges').addEventListener('click', function() {
+        const questionId = document.getElementById('edit_question_id').value;
+        const category = document.getElementById('edit_category').value;
+        const questionText = document.getElementById('edit_question_text').value;
+        const correctAnswer = document.getElementById('edit_correct_answer').value;
+
+        // جمع‌آوری گزینه‌های نادرست
+        const wrongAnswers = [];
+        document.querySelectorAll('#edit_wrong_answers_container input').forEach(input => {
+            if (input.value.trim()) {
+                wrongAnswers.push(input.value.trim());
+            }
+        });
+
+        // اعتبارسنجی
+        if (!category || !questionText || !correctAnswer || wrongAnswers.length < 3) {
+            alert('لطفاً تمامی فیلدها را پر کنید و حداقل سه گزینه نادرست وارد نمایید.');
+            return;
+        }
+
+        // ارسال درخواست به سرور
+        fetch('/admin/update_question/' + questionId, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({
+                category: category,
+                question_text: questionText,
+                correct_answer: correctAnswer,
+                wrong_answers: wrongAnswers
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('خطای سرور: ' + response.status);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                // به‌روزرسانی ردیف در جدول
+                const row = document.getElementById('question-' + questionId);
+                row.setAttribute('data-category', category);
+                row.setAttribute('data-question', questionText);
+                row.setAttribute('data-correct', correctAnswer);
+                row.setAttribute('data-wrong', JSON.stringify(wrongAnswers));
+
+                // به‌روزرسانی متن‌های نمایشی
+                row.cells[0].textContent = category;
+                row.cells[1].textContent = questionText;
+                row.cells[2].textContent = correctAnswer;
+
+                // بستن مودال
+                editModal.hide();
+
+                // نمایش پیام موفقیت
+                alert('سوال با موفقیت به‌روزرسانی شد.');
+            } else {
+                alert('خطا در به‌روزرسانی سوال: ' + (data.error || 'خطای نامشخص'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('خطا در ارتباط با سرور: ' + error.message);
+        });
+    });
+});
+
+// حذف سوال
+function deleteQuestion(questionId) {
+    if (confirm('آیا از حذف این سوال اطمینان دارید؟')) {
+        fetch(`/admin/delete_question/${questionId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // حذف سطر مربوط به سوال از جدول
+                document.getElementById(`question-${questionId}`).remove();
+                alert('سوال با موفقیت حذف شد');
+            } else {
+                alert('خطا در حذف سوال: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('خطا در ارتباط با سرور');
+        });
+    }
+}
+
+// دریافت سوالات از API
+document.getElementById('import-questions').addEventListener('click', function() {
+    // نمایش پیام بارگذاری
+    this.innerHTML = '<i class="bi bi-hourglass-split"></i> در حال دریافت...';
+    this.disabled = true;
+
+    fetch('/import_questions', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({})
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`خطای سرور: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            alert(data.message || 'سوالات با موفقیت اضافه شدند');
+            location.reload();
+        } else {
+            alert('خطا: ' + (data.error || 'خطای نامشخص'));
+            // بازگرداندن دکمه به حالت اولیه
+            resetImportButton();
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('خطا در ارتباط با سرور: ' + error.message);
+        // بازگرداندن دکمه به حالت اولیه
+        resetImportButton();
+    });
+});
+
+// تابع برای بازگرداندن دکمه به حالت اولیه
+function resetImportButton() {
+    const importBtn = document.getElementById('import-questions');
+    if (importBtn) {
+        importBtn.innerHTML = '<i class="bi bi-cloud-download"></i> دریافت سوالات جدید';
+        importBtn.disabled = false;
+    }
+}
+
+    document.getElementById('questionSearch').addEventListener('input', filterQuestions);
+    document.getElementById('categorySearch').addEventListener('change', filterQuestions);
+
+    function filterQuestions() {
+        const searchText = document.getElementById('questionSearch').value.trim().toLowerCase();
+        const selectedCategory = document.getElementById('categorySearch').value.trim().toLowerCase();
+        const rows = document.querySelectorAll('#questionsTable tbody tr');
+
+        rows.forEach(row => {
+            const category = row.getAttribute('data-category') ? row.getAttribute('data-category').trim().toLowerCase() : "";
+            const questionText = row.getAttribute('data-question') ? row.getAttribute('data-question').trim().toLowerCase() : "";
+
+            // بررسی فیلتر دسته‌بندی و متن سوال
+            const matchCategory = selectedCategory === "" || category === selectedCategory;
+            const matchText = searchText === "" || questionText.includes(searchText);
+
+            row.style.display = matchCategory && matchText ? '' : 'none';
+        });
+    }
+    document.getElementById('questionSearch').addEventListener('input', filterQuestions);
+    document.getElementById('categorySearch').addEventListener('change', filterQuestions);
+    
+    function filterQuestions() {
+        const searchText = document.getElementById('questionSearch').value.trim().toLowerCase();
+        const selectedCategory = document.getElementById('categorySearch').value.trim().toLowerCase();
+        const rows = document.querySelectorAll('#questionsTable tbody tr');
+    
+        rows.forEach(row => {
+            const category = row.getAttribute('data-category') ? row.getAttribute('data-category').trim().toLowerCase() : "";
+            const questionText = row.getAttribute('data-question') ? row.getAttribute('data-question').trim().toLowerCase() : "";
+    
+            // ابتدا فیلتر دسته‌بندی
+            const matchCategory = selectedCategory === "" || category === selectedCategory;
+    
+            // اگر دسته‌بندی تطابق داشت، سپس جستجو را بر اساس متن اعمال می‌کنیم
+            const matchText = matchCategory && (searchText === "" || questionText.includes(searchText));
+    
+            // اگر هم دسته‌بندی و هم متن سوال مطابقت داشتند، ردیف را نمایش می‌دهیم
+            if (matchText) {
+                row.style.display = '';  // نمایش ردیف
+            } else {
+                row.style.display = 'none';  // پنهان کردن ردیف
+            }
+        });
+    }
+    
+</script>
+{% endblock %}
+{% endblock %}

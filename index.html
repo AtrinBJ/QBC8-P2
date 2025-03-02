@@ -1,0 +1,581 @@
+{% extends "base.html" %}
+
+{% block title %}صفحه اصلی - سیستم کوییز{% endblock %}
+
+{% block custom_css %}
+<style>
+    /* استایل جدید برای صفحه انتخاب دسته‌بندی‌ها */
+    .category-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+        margin: 40px 0;
+    }
+
+    .category-card {
+        background-color: rgba(30, 30, 40, 0.7);
+        border-radius: 12px;
+        overflow: hidden;
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        border: 1px solid rgba(100, 100, 255, 0.2);
+        position: relative;
+        cursor: pointer;
+        height: 120px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+
+    .category-card:hover, .category-card.selected {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
+        border-color: var(--primary-color);
+    }
+
+    .category-card.selected::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        border: 3px solid var(--primary-color);
+        border-radius: 12px;
+        animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
+    }
+
+    .category-card .card-content {
+        text-align: center;
+        z-index: 2;
+    }
+
+    .category-card .category-icon {
+        font-size: 2.5rem;
+        margin-bottom: 15px;
+        color: var(--primary-color);
+        transition: all 0.3s ease;
+    }
+
+    .category-card:hover .category-icon {
+        transform: scale(1.2);
+    }
+
+    .category-card .category-title {
+        font-size: 1.25rem;
+        font-weight: bold;
+        color: #fff;
+        margin-bottom: 5px;
+    }
+
+    .quiz-setup-section {
+        margin-top: 80px;
+        padding: 30px;
+        background-color: rgba(30, 30, 40, 0.8);
+        border-radius: 15px;
+        border: 1px solid rgba(100, 100, 255, 0.2);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        opacity: 0;
+        transform: translateY(20px);
+        transition: all 0.5s ease;
+    }
+
+    .quiz-setup-section.active {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .setup-header {
+        margin-bottom: 30px;
+    }
+
+    .selected-category {
+        font-size: 1.5rem;
+        margin-bottom: 10px;
+        display: inline-block;
+        padding: 8px 20px;
+        background-color: rgba(var(--primary-color-rgb), 0.2);
+        border-radius: 50px;
+        border: 1px solid var(--primary-color);
+    }
+
+    .question-count-slider {
+        margin: 30px 0;
+    }
+
+    .range-slider {
+        -webkit-appearance: none;
+        width: 100%;
+        height: 10px;
+        border-radius: 5px;
+        background: linear-gradient(to right, #1a1a2e, var(--primary-color));
+        outline: none;
+    }
+
+    .range-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: var(--primary-color);
+        cursor: pointer;
+        box-shadow: 0 0 10px rgba(var(--primary-color-rgb), 0.5);
+        transition: all 0.2s ease;
+    }
+
+    .range-slider::-webkit-slider-thumb:hover {
+        transform: scale(1.1);
+        box-shadow: 0 0 15px rgba(var(--primary-color-rgb), 0.7);
+    }
+
+    .range-slider::-moz-range-thumb {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: var(--primary-color);
+        cursor: pointer;
+        box-shadow: 0 0 10px rgba(var(--primary-color-rgb), 0.5);
+        transition: all 0.2s ease;
+        border: none;
+    }
+
+    .start-btn {
+        margin-top: 20px;
+        padding: 12px 30px;
+        font-size: 1.2rem;
+        border-radius: 50px;
+        background: linear-gradient(45deg, var(--primary-color), #6a11cb);
+        border: none;
+        color: white;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        transition: all 0.3s ease;
+    }
+
+    .start-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 15px 25px rgba(0, 0, 0, 0.4);
+        background: linear-gradient(45deg, #6a11cb, var(--primary-color));
+    }
+
+    .question-counter {
+        font-size: 3rem;
+        font-weight: bold;
+        color: var(--primary-color);
+        text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+    }
+
+    /* سفارشی‌سازی رنگ در حالت تاریک */
+    :root {
+        --primary-color: #0d6efd;
+        --primary-color-rgb: 13, 110, 253;
+    }
+
+    /* تنظیمات انیمیشن ورود عناصر */
+    .fade-in {
+        animation: fadeInAnimation 0.8s forwards;
+        opacity: 0;
+    }
+
+    @keyframes fadeInAnimation {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* انیمیشن تاخیر برای کارت‌ها */
+    {% for i in range(20) %}
+    .category-card:nth-child({{ i }}) {
+        animation-delay: {{ 0.1 * i }}s;
+    }
+    {% endfor %}
+
+    /* منوی مدیریت ادمین */
+    .admin-controls {
+        margin-bottom: 40px;
+        padding: 20px;
+        background-color: rgba(30, 30, 40, 0.7);
+        border-radius: 15px;
+        border: 1px solid rgba(255, 193, 7, 0.3);
+    }
+
+    .admin-controls .card {
+        background-color: rgba(40, 42, 54, 0.7);
+        border: 1px solid rgba(255, 193, 7, 0.2);
+        transition: all 0.3s ease;
+    }
+
+    .admin-controls .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    .admin-controls .btn {
+        transition: all 0.3s ease;
+    }
+
+    .admin-controls .btn:hover {
+        transform: translateY(-2px);
+    }
+
+    /* نشان‌گر وضعیت بارگذاری */
+    .spinner-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .spinner-overlay.active {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .spinner-content {
+        text-align: center;
+    }
+
+    .spinner {
+        width: 60px;
+        height: 60px;
+        border: 5px solid rgba(255,255,255,0.1);
+        border-radius: 50%;
+        border-top-color: var(--primary-color);
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    /* آیکن‌های دسته‌بندی */
+    .category-mythology { color: #ff9800; }
+    .category-books { color: #4caf50; }
+    .category-science { color: #2196f3; }
+    .category-anime { color: #e91e63; }
+    .category-sports { color: #00bcd4; }
+    .category-cartoon { color: #9c27b0; }
+    .category-animals { color: #795548; }
+    .category-comics { color: #f44336; }
+    .category-geography { color: #607d8b; }
+    .category-math { color: #ffeb3b; }
+    .category-celebrities { color: #ff5722; }
+    .category-computers { color: #03a9f4; }
+    .category-musicals { color: #8bc34a; }
+    .category-gadgets { color: #3f51b5; }
+    .category-card {
+        opacity: 0;
+        animation: fadeInAnimation 0.8s ease-in-out forwards;
+    }
+    
+    .category-card {
+        opacity: 0;
+        animation: fadeInAnimation 0.8s ease-in-out forwards;
+    }
+    
+    /* اعمال تأخیر انیمیشن بر اساس ترتیب */
+    .category-card:nth-child(1) { animation-delay: 0.1s; }
+    .category-card:nth-child(2) { animation-delay: 0.2s; }
+    .category-card:nth-child(3) { animation-delay: 0.3s; }
+    .category-card:nth-child(4) { animation-delay: 0.4s; }
+    .category-card:nth-child(5) { animation-delay: 0.5s; }
+    .category-card:nth-child(6) { animation-delay: 0.6s; }
+    .category-card:nth-child(7) { animation-delay: 0.7s; }
+    .category-card:nth-child(8) { animation-delay: 0.8s; }
+    .category-card:nth-child(9) { animation-delay: 0.9s; }
+    .category-card:nth-child(10) { animation-delay: 1s; }
+    .category-card:nth-child(11) { animation-delay: 1.1s; }
+    .category-card:nth-child(12) { animation-delay: 1.2s; }
+    .category-card:nth-child(13) { animation-delay: 1.3s; }
+    .category-card:nth-child(14) { animation-delay: 1.4s; }
+    .category-card:nth-child(15) { animation-delay: 1.5s; }
+    .category-card:nth-child(16) { animation-delay: 1.6s; }
+    .category-card:nth-child(17) { animation-delay: 1.7s; }
+    .category-card:nth-child(18) { animation-delay: 1.8s; }
+    .category-card:nth-child(19) { animation-delay: 1.9s; }
+    .category-card:nth-child(20) { animation-delay: 2s; }
+    .category-card:nth-child(21) { animation-delay: 2.1s; }
+    .category-card:nth-child(22) { animation-delay: 2.2s; }
+    
+    @keyframes fadeInAnimation {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    
+    
+    
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- اسپینر بارگذاری -->
+<div class="spinner-overlay" id="loadingSpinner">
+    <div class="spinner-content">
+        <div class="spinner mb-3"></div>
+        <p class="text-light">در حال بارگذاری...</p>
+    </div>
+</div>
+
+<!-- پنل مدیریت (فقط برای ادمین) -->
+{% if user and user.username == 'admin' %}
+<div class="admin-controls fade-in">
+    <h4 class="text-center mb-4">
+        <i class="bi bi-gear-fill me-2"></i>
+        پنل مدیریت
+    </h4>
+    <div class="row g-3">
+        <div class="col-md-6">
+            <div class="card bg-primary bg-opacity-10">
+                <div class="card-body">
+                    <h5 class="card-title">مدیریت سوالات</h5>
+                    <p class="card-text">اضافه، حذف و ویرایش سوالات کوییز</p>
+                    <a href="{{ url_for('manage_questions') }}" class="btn btn-primary">
+                        <i class="bi bi-pencil-square"></i>
+                        مدیریت سوالات
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card bg-info bg-opacity-10">
+                <div class="card-body">
+                    <h5 class="card-title">دریافت سوالات از API</h5>
+                    <p class="card-text">افزودن سوالات جدید از منبع خارجی</p>
+                    <button onclick="importQuestions()" id="import-questions" class="btn btn-info text-white">
+                        <i class="bi bi-cloud-download"></i>
+                        دریافت سوالات
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- بخش انتخاب دسته‌بندی -->
+<h2 class="text-center mb-4 fade-in">دسته‌بندی‌های کوییز</h2>
+<div class="category-grid">
+    {% for category in categories %}
+    <div class="category-card fade-in" data-category="{{ category }}">
+        <div class="card-content">
+            {% set icon_class = "" %}
+            {% if "اساطیر" in category or "افسانه" in category or "Mythology" in category %}
+                {% set icon_class = "bi-shield-fill category-mythology" %}
+            {% elif "کتاب" in category or "Books" in category %}
+                {% set icon_class = "bi-book-fill category-books" %}
+            {% elif "علوم" in category or "Science" in category %}
+                {% set icon_class = "bi-lightbulb-fill category-science" %}
+            {% elif "انیمه" in category or "Anime" in category %}
+                {% set icon_class = "bi-emoji-smile-fill category-anime" %}
+            {% elif "ورزش" in category or "Sports" in category %}
+                {% set icon_class = "bi-trophy-fill category-sports" %}
+            {% elif "کارتون" in category or "Cartoon" in category or "Animation" in category %}
+                {% set icon_class = "bi-film category-cartoon" %}
+            {% elif "حیوان" in category or "Animals" in category %}
+                {% set icon_class = "bi-bug-fill category-animals" %}
+            {% elif "کمیک" in category or "Comics" in category %}
+                {% set icon_class = "bi-chat-square-text-fill category-comics" %}
+            {% elif "جغرافی" in category or "Geography" in category %}
+                {% set icon_class = "bi-globe category-geography" %}
+            {% elif "ریاضی" in category or "Mathematics" in category or "Math" in category %}
+                {% set icon_class = "bi-calculator-fill category-math" %}
+            {% elif "سلبریتی" in category or "مشاهیر" in category or "Celebrities" in category %}
+                {% set icon_class = "bi-star-fill category-celebrities" %}
+            {% elif "کامپیوتر" in category or "Computers" in category %}
+                {% set icon_class = "bi-pc-display category-computers" %}
+            {% elif "موسیقی" in category or "Musicals" in category or "Theatres" in category %}
+                {% set icon_class = "bi-music-note-beamed category-musicals" %}
+            {% elif "گجت" in category or "ابزار" in category or "Gadgets" in category %}
+                {% set icon_class = "bi-phone-fill category-gadgets" %}
+            {% else %}
+                {% set icon_class = "bi-journal-text" %}
+            {% endif %}
+
+            <i class="bi {{ icon_class }} category-icon"></i>
+            <h5 class="category-title">{{ category|safe }}</h5>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- بخش تنظیمات کوییز (ابتدا مخفی است) -->
+<div class="quiz-setup-section" id="quizSetupSection">
+    <div class="setup-header text-center">
+        <h3>تنظیمات کوییز</h3>
+        <div class="selected-category" id="selectedCategoryDisplay">دسته‌بندی انتخاب نشده</div>
+    </div>
+
+    <form method="POST" id="quizForm">
+        <div class="question-count-slider text-center">
+            <h4 class="mb-3">تعداد سوالات</h4>
+            <div class="question-counter" id="questionCounter">10</div>
+            <input type="range" class="range-slider mt-3" id="questionCountSlider" name="num_questions" min="5" max="20" value="10">
+            <div class="slider-labels d-flex justify-content-between">
+                <span>5</span>
+                <span>10</span>
+                <span>15</span>
+                <span>20</span>
+            </div>
+        </div>
+
+        <div class="text-center">
+            <button type="submit" class="btn start-btn">
+                <i class="bi bi-play-fill me-2"></i>
+                شروع کوییز
+            </button>
+        </div>
+    </form>
+</div>
+
+{% endblock %}
+
+{% block custom_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // متغیرهای سراسری
+    let selectedCategory = null;
+    const categoryCards = document.querySelectorAll('.category-card');
+    const quizSetupSection = document.getElementById('quizSetupSection');
+    const selectedCategoryDisplay = document.getElementById('selectedCategoryDisplay');
+    const quizForm = document.getElementById('quizForm');
+    const questionCountSlider = document.getElementById('questionCountSlider');
+    const questionCounter = document.getElementById('questionCounter');
+    const loadingSpinner = document.getElementById('loadingSpinner');
+
+    // نمایش انیمیشن بارگذاری هنگام ارسال فرم
+    quizForm.addEventListener('submit', function(e) {
+        // بررسی اینکه آیا دسته‌بندی انتخاب شده است
+        if (!selectedCategory) {
+            e.preventDefault();
+            alert('لطفاً یک دسته‌بندی انتخاب کنید');
+            return false;
+        }
+
+        // تنظیم مسیر ارسال فرم به URL صحیح
+        this.action = "/quiz/" + selectedCategory;
+
+        // نمایش انیمیشن بارگذاری
+        loadingSpinner.classList.add('active');
+    });
+
+    // بروزرسانی شمارنده سوالات با تغییر اسلایدر
+    questionCountSlider.addEventListener('input', function() {
+        questionCounter.textContent = this.value;
+    });
+
+    // اضافه کردن رویداد کلیک به کارت‌های دسته‌بندی
+    categoryCards.forEach(card => {
+        card.addEventListener('click', function() {
+            // حذف کلاس انتخاب شده از همه کارت‌ها
+            categoryCards.forEach(c => c.classList.remove('selected'));
+
+            // اضافه کردن کلاس انتخاب شده به کارت کلیک شده
+            this.classList.add('selected');
+
+            // ذخیره دسته‌بندی انتخاب شده
+            selectedCategory = this.dataset.category;
+
+            // نمایش نام دسته‌بندی انتخاب شده
+            selectedCategoryDisplay.innerHTML = selectedCategory;
+
+
+            // نمایش بخش تنظیمات کوییز با انیمیشن
+            quizSetupSection.classList.add('active');
+
+            // اسکرول به بخش تنظیمات کوییز
+            setTimeout(() => {
+                quizSetupSection.scrollIntoView({ behavior: 'smooth' });
+            }, 300);
+        });
+    });
+
+    {% if user and user.username == 'admin' %}
+    // دریافت سوالات از API (فقط برای ادمین)
+    window.importQuestions = function() {
+        const importBtn = document.getElementById('import-questions');
+        if (importBtn) {
+            importBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> در حال دریافت...';
+            importBtn.disabled = true;
+
+            // نمایش انیمیشن بارگذاری
+            loadingSpinner.classList.add('active');
+        }
+
+        fetch('/import_questions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({})
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`خطای سرور: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            // مخفی کردن انیمیشن بارگذاری
+            loadingSpinner.classList.remove('active');
+
+            if (data.success) {
+                alert(data.message || 'سوالات با موفقیت اضافه شدند');
+                location.reload();
+            } else {
+                alert('خطا: ' + (data.error || 'خطای نامشخص'));
+                resetImportButton();
+            }
+        })
+        .catch(error => {
+            // مخفی کردن انیمیشن بارگذاری
+            loadingSpinner.classList.remove('active');
+
+            console.error('Error:', error);
+            alert('خطا در ارتباط با سرور: ' + error.message);
+            resetImportButton();
+        });
+    };
+
+    // تابع برای بازگرداندن دکمه به حالت اولیه
+    function resetImportButton() {
+        const importBtn = document.getElementById('import-questions');
+        if (importBtn) {
+            importBtn.innerHTML = '<i class="bi bi-cloud-download"></i> دریافت سوالات جدید';
+            importBtn.disabled = false;
+        }
+    }
+    {% endif %}
+});
+
+
+</script>
+{% endblock %}

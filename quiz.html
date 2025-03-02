@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+
+{% block title %}کوییز {{ category|safe }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-row">
+    <h2 class="text-truncate text-start" style="max-width: 60%;">کوییز {{ category|safe }}</h2>
+    <div class="d-flex align-items-center text-end">
+        <div class="me-4">
+            <i class="bi bi-clock"></i>
+            <span id="timer" class="ms-1">
+                {{ '%02d' % (quiz_duration // 60) }}:{{ '%02d' % (quiz_duration % 60) }}
+            </span>
+        </div>
+        <div>
+            سوال <span id="currentQuestion">1</span> از {{ num_questions }}
+        </div>
+    </div>
+</div>
+
+<div class="progress mb-4" style="height: 10px;">
+    <div id="progressBar" class="progress-bar" role="progressbar" style="width: 0%"></div>
+</div>
+
+<form id="quizForm" data-category="{{ category|safe }}" data-total-questions="{{ num_questions }}">
+    {% for question in questions %}
+    <div id="question-{{ loop.index }}" class="question-card card mb-4" {% if loop.index != 1 %}style="display: none"{% endif %}>
+        <div class="card-body">
+            <h5 class="card-title mb-4 question-text">{{ question.question | safe }}</h5>
+            <div class="options">
+                {% for option in question.options %}
+                <div class="mb-3">
+                    <input type="radio" class="btn-check"
+                           name="question-{{ question.id }}"
+                           id="option-{{ question.id }}-{{ loop.index }}"
+                           value="{{ option }}"
+                           required>
+                    <label class="btn btn-outline-primary w-100 text-start"
+                           for="option-{{ question.id }}-{{ loop.index }}">
+                        {{ option }}
+                    </label>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="card-footer d-flex justify-content-between align-items-center">
+            {% if not loop.first %}
+            <button type="button" class="btn btn-secondary nav-btn" data-direction="prev" data-question="{{ loop.index - 1 }}">
+                <i class="bi bi-arrow-left"></i> سوال قبلی
+            </button>
+            {% else %}
+            <div></div>
+            {% endif %}
+
+            {% if not loop.last %}
+            <button type="button" class="btn btn-primary nav-btn" data-direction="next" data-question="{{ loop.index + 1 }}">
+                سوال بعدی <i class="bi bi-arrow-right"></i>
+            </button>
+            {% else %}
+            <button type="button" id="finishQuiz" class="btn btn-danger">پایان کوئیز</button>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</form>
+
+<!-- Modal for Quiz Results -->
+<div class="modal fade" id="resultModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">نتیجه کوییز</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div id="resultIcon" class="mb-3"></div>
+                <h3>نمره شما: <span id="scorePercentage"></span>%</h3>
+                <p>پاسخ‌های صحیح: <span id="correctAnswers"></span> از <span id="totalQuestionsResult"></span></p>
+                <div id="resultMessage" class="mt-3"></div>
+            </div>
+            <div class="modal-footer">
+                <a href="/profile" class="btn btn-primary">مشاهده پروفایل</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .question-text {
+        direction: ltr;
+        text-align: left; 
+        unicode-bidi: embed;
+    }
+    .btn-primary {
+        background-color: rgb(0, 102, 211); 
+        border-color: rgb(0, 102, 211);
+    }
+    .btn-primary:hover {
+        background-color: rgb(0, 56, 121);
+        border-color: rgb(0, 56, 121);
+    }
+    .btn-secondary {
+        background-color: rgb(71, 75, 79); 
+        border-color: rgb(71, 75, 79);
+    }
+    .btn-secondary:hover {
+        background-color: #5a6268;
+    }
+    .btn-danger {
+        background-color: #dc3545; 
+    }
+    .btn-danger:hover {
+        background-color: #bd2130;
+    }
+    .progress-bar {
+        background-color: rgb(38, 155, 149) !important;
+    }
+    .question-card {
+        background-color: rgba(255, 255, 255, 0.41);
+        border: 1px solid #ddd; 
+        border-radius: 10px;
+        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); 
+    }
+    .btn-outline-primary {
+        color: rgb(181, 215, 251);
+        border-color: rgb(156, 204, 255);
+        transition: all 0.3s ease-in-out;
+    }
+    .btn-outline-primary:hover {
+        background-color: rgb(20, 71, 165);
+        color: white;
+    }
+</style>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    let slider = document.getElementById("questionCountSlider");
+    let counter = document.getElementById("questionCounter");
+
+    // به‌روزرسانی مقدار نمایش تعداد سوالات هنگام تغییر اسلایدر
+    slider.addEventListener("input", function () {
+        counter.textContent = slider.value;
+    });
+
+    // هنگام ارسال فرم، مطمئن شوید مقدار صحیح ارسال شده است
+    document.getElementById("quizForm").addEventListener("submit", function () {
+        let hiddenInput = document.createElement("input");
+        hiddenInput.type = "hidden";
+        hiddenInput.name = "num_questions";
+        hiddenInput.value = slider.value;
+        this.appendChild(hiddenInput);
+    });
+});
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    let duration = {{ quiz_duration }};  // مقدار مدت زمان آزمون (ثانیه)
+    let timerElement = document.getElementById("timer");
+    let durationElement = document.getElementById("examDuration");
+
+    function updateTimer() {
+        let minutes = Math.floor(duration / 60);
+        let seconds = duration % 60;
+
+        // نمایش زمان در دو فرمت مختلف
+        timerElement.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+        durationElement.textContent = duration;  // نمایش تعداد ثانیه‌های باقی‌مانده
+
+        if (duration <= 0) {
+            clearInterval(timerInterval);
+            alert("زمان آزمون به پایان رسید!");
+            document.getElementById("quizForm").submit(); // ارسال خودکار فرم آزمون
+        } else {
+            duration--;
+        }
+    }
+
+    // اجرای تایمر هر ثانیه
+    let timerInterval = setInterval(updateTimer, 1000);
+    updateTimer();  // اجرای اولیه برای نمایش مقدار صحیح از ابتدا
+});
+</script>
+
+
+{% endblock %}
+
+
+::contentReference[oaicite:1]{index=1}
+ 
