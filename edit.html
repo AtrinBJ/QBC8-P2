@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}ویرایش تیکت{% endblock %}
+
+{% block custom_css %}
+<style>
+    .edit-ticket-container {
+        background-color: rgba(0, 0, 0, 0.6);
+        border-radius: 10px;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+    .card {
+        background-color: rgba(30, 30, 40, 0.7);
+        border: 1px solid rgba(100, 100, 255, 0.2);
+        border-radius: 10px;
+        transition: all 0.3s ease;
+    }
+
+    .form-control {
+        background-color: rgba(40, 42, 54, 0.7);
+        color: #f8f8f2;
+        border: 1px solid rgba(100, 100, 255, 0.3);
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus {
+        background-color: rgba(40, 42, 54, 0.9);
+        color: #f8f8f2;
+        border-color: #bd93f9;
+        box-shadow: 0 0 0 0.25rem rgba(189, 147, 249, 0.25);
+    }
+
+    .form-label {
+        color: #8be9fd;
+        font-weight: bold;
+    }
+
+    .submit-btn {
+        background-color: #6272a4;
+        border-color: #6272a4;
+        transition: all 0.3s ease;
+    }
+
+    .submit-btn:hover {
+        background-color: #bd93f9;
+        border-color: #bd93f9;
+        transform: translateY(-2px);
+    }
+
+    .cancel-btn {
+        background-color: rgba(255, 85, 85, 0.7);
+        border-color: rgba(255, 85, 85, 0.7);
+        transition: all 0.3s ease;
+    }
+
+    .cancel-btn:hover {
+        background-color: rgba(255, 85, 85, 1);
+        border-color: rgba(255, 85, 85, 1);
+        transform: translateY(-2px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container edit-ticket-container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="card-title mb-4">
+                        <i class="bi bi-pencil-square me-2"></i>
+                        ویرایش تیکت
+                    </h3>
+
+                    <form method="POST" action="{{ url_for('edit_ticket', ticket_id=ticket.id) }}">
+                        <div class="mb-3">
+                            <label for="title" class="form-label">عنوان تیکت</label>
+                            <input type="text" class="form-control" id="title" name="title"
+                                   value="{{ ticket.title }}" required maxlength="100">
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('view_ticket', ticket_id=ticket.id) }}" class="btn btn-danger cancel-btn">
+                                <i class="bi bi-x-circle me-1"></i>
+                                انصراف
+                            </a>
+                            <button type="submit" class="btn btn-primary submit-btn">
+                                <i class="bi bi-check-circle me-1"></i>
+                                ذخیره تغییرات
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
