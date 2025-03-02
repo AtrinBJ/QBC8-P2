@@ -1,0 +1,710 @@
+{% extends "base.html" %}
+
+{% block title %}مشاهده تیکت - {{ ticket.title }}{% endblock %}
+
+{% block custom_css %}
+<style>
+    .ticket-container {
+        background-color: rgba(0, 0, 0, 0.6);
+        border-radius: 10px;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+    .card {
+        background-color: rgba(30, 30, 40, 0.7);
+        border: 1px solid rgba(100, 100, 255, 0.2);
+        border-radius: 10px;
+        transition: all 0.3s ease;
+    }
+
+    .status-badge {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: bold;
+    }
+
+    .status-open {
+        background-color: rgba(80, 250, 123, 0.2);
+        color: #50fa7b;
+        border: 1px solid #50fa7b;
+    }
+
+    .status-inprogress {
+        background-color: rgba(241, 250, 140, 0.2);
+        color: #f1fa8c;
+        border: 1px solid #f1fa8c;
+    }
+
+    .status-closed {
+        background-color: rgba(255, 85, 85, 0.2);
+        color: #ff5555;
+        border: 1px solid #ff5555;
+    }
+
+    .date-time {
+        font-size: 0.8rem;
+        color: rgba(248, 248, 242, 0.7);
+    }
+
+    /* استایل برای پیام‌ها */
+    .message-list {
+        max-height: 500px;
+        overflow-y: auto;
+        margin-bottom: 20px;
+        padding: 0 5px;
+    }
+
+    .message-bubble {
+        max-width: 80%;
+        margin-bottom: 15px;
+        padding: 15px;
+        border-radius: 15px;
+        position: relative;
+    }
+
+    .message-user {
+        background-color: rgba(139, 233, 253, 0.2);
+        color: #f8f8f2;
+        border: 1px solid rgba(139, 233, 253, 0.4);
+        margin-right: auto;
+        border-bottom-left-radius: 5px;
+    }
+
+    .message-admin {
+        background-color: rgba(189, 147, 249, 0.2);
+        color: #f8f8f2;
+        border: 1px solid rgba(189, 147, 249, 0.4);
+        margin-left: auto;
+        border-bottom-right-radius: 5px;
+    }
+
+    .message-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        font-size: 0.85rem;
+    }
+
+    .message-sender {
+        font-weight: bold;
+    }
+
+    .message-time {
+        color: rgba(248, 248, 242, 0.7);
+    }
+
+    .message-content {
+        white-space: pre-line;
+    }
+
+    /* استایل فرم پاسخ */
+    .form-control {
+        background-color: rgba(40, 42, 54, 0.7);
+        color: #f8f8f2;
+        border: 1px solid rgba(100, 100, 255, 0.3);
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus {
+        background-color: rgba(40, 42, 54, 0.9);
+        color: #f8f8f2;
+        border-color: #bd93f9;
+        box-shadow: 0 0 0 0.25rem rgba(189, 147, 249, 0.25);
+    }
+
+    .send-btn {
+        background-color: #6272a4;
+        border-color: #6272a4;
+        transition: all 0.3s ease;
+    }
+
+    .send-btn:hover {
+        background-color: #bd93f9;
+        border-color: #bd93f9;
+        transform: translateY(-2px);
+    }
+
+    .ticket-closed-message {
+        background-color: rgba(255, 85, 85, 0.2);
+        color: #ff5555;
+        border: 1px solid #ff5555;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+
+    .ticket-waiting-message {
+        background-color: rgba(241, 250, 140, 0.2);
+        color: #f1fa8c;
+        border: 1px solid #f1fa8c;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+
+    /* اسکرول‌بار سفارشی */
+    .message-list::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .message-list::-webkit-scrollbar-track {
+        background: rgba(40, 42, 54, 0.5);
+        border-radius: 10px;
+    }
+
+    .message-list::-webkit-scrollbar-thumb {
+        background: rgba(98, 114, 164, 0.7);
+        border-radius: 10px;
+    }
+
+    .message-list::-webkit-scrollbar-thumb:hover {
+        background: #bd93f9;
+    }
+
+    /* استایل برای دکمه‌های ویرایش پیام */
+    .message-actions {
+        position: absolute;
+        top: 5px;
+        left: 5px;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .message-bubble:hover .message-actions {
+        opacity: 1;
+    }
+
+    .edit-btn, .delete-btn {
+        padding: 3px 8px;
+        font-size: 0.8rem;
+        margin-left: 2px;
+        border-radius: 4px;
+        background-color: rgba(40, 42, 54, 0.7);
+    }
+
+    .edit-btn:hover, .delete-btn:hover {
+        background-color: rgba(40, 42, 54, 0.9);
+    }
+
+    .edited-indicator {
+        font-size: 0.7rem;
+        margin-left: 5px;
+        color: rgba(248, 248, 242, 0.5);
+        font-style: italic;
+    }
+
+    /* استایل برای پیوست‌ها */
+    .attachments-section {
+        background-color: rgba(40, 42, 54, 0.5);
+        border-radius: 8px;
+        padding: 12px;
+        margin-top: 10px;
+        border: 1px dashed rgba(139, 233, 253, 0.3);
+    }
+
+    .attachments-title {
+        color: #8be9fd;
+        font-size: 0.9rem;
+        font-weight: bold;
+        margin-bottom: 8px;
+    }
+
+    .attachment-item {
+        display: flex;
+        align-items: center;
+        background-color: rgba(68, 71, 90, 0.5);
+        padding: 8px 12px;
+        border-radius: 6px;
+        margin-bottom: 8px;
+        transition: all 0.2s ease;
+    }
+
+    .attachment-item:hover {
+        background-color: rgba(68, 71, 90, 0.8);
+    }
+
+    .attachment-icon {
+        font-size: 1.2rem;
+        margin-left: 10px;
+    }
+
+    .attachment-info {
+        flex-grow: 1;
+    }
+
+    .attachment-filename {
+        font-size: 0.9rem;
+        color: #f8f8f2;
+    }
+
+    .attachment-details {
+        font-size: 0.7rem;
+        color: rgba(248, 248, 242, 0.6);
+    }
+
+    .attachment-actions {
+        display: flex;
+    }
+
+    .attachment-action-btn {
+        padding: 2px 6px;
+        font-size: 0.8rem;
+        margin-right: 5px;
+        border-radius: 4px;
+        background-color: rgba(40, 42, 54, 0.7);
+    }
+
+    .attachment-action-btn:hover {
+        background-color: rgba(40, 42, 54, 0.9);
+    }
+
+    /* استایل برای بخش آپلود فایل */
+    .file-upload-section {
+        background-color: rgba(40, 42, 54, 0.5);
+        border-radius: 8px;
+        padding: 15px;
+        margin-top: 20px;
+        border: 1px dashed rgba(139, 233, 253, 0.3);
+    }
+
+    .file-type-icon {
+        font-size: 1.5rem;
+        margin-right: 8px;
+    }
+
+    /* استایل برای ویرایش عنوان تیکت */
+    .ticket-edit-btn {
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        margin-right: 10px;
+        background-color: rgba(40, 42, 54, 0.8);
+        border: 1px solid rgba(98, 114, 164, 0.5);
+        color: #8be9fd;
+        transition: all 0.3s ease;
+    }
+
+    .ticket-edit-btn:hover {
+        background-color: rgba(40, 42, 54, 1);
+        border-color: #8be9fd;
+        transform: translateY(-2px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container ticket-container">
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start flex-wrap">
+                <div>
+                    <h3 class="card-title mb-3">
+                        <i class="bi bi-ticket-perforated-fill me-2"></i>
+                        {{ ticket.title }}
+
+                        <!-- دکمه ویرایش عنوان تیکت (فقط برای فرستنده) -->
+                        {% if ticket.user_id == user.id and ticket.status != 'بسته' %}
+                        <a href="{{ url_for('edit_ticket', ticket_id=ticket.id) }}" class="ticket-edit-btn">
+                            <i class="bi bi-pencil-square"></i>
+                            ویرایش عنوان
+                        </a>
+                        {% endif %}
+                    </h3>
+
+                    <div class="mb-3">
+                        <div class="date-time">
+                            <i class="bi bi-person me-1"></i>
+                            فرستنده: {{ ticket.sender.username }}
+                        </div>
+                        <div class="date-time">
+                            <i class="bi bi-person-check me-1"></i>
+                            گیرنده: {{ ticket.recipient.username }}
+                        </div>
+                        <div class="date-time">
+                            <i class="bi bi-calendar3 me-1"></i>
+                            ایجاد شده در: {{ ticket.created_at.strftime('%Y/%m/%d %H:%M') }}
+                        </div>
+                        <div class="date-time">
+                            <i class="bi bi-clock-history me-1"></i>
+                            آخرین به‌روزرسانی: {{ ticket.updated_at.strftime('%Y/%m/%d %H:%M') }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex flex-column align-items-end">
+                    <span class="status-badge mb-2
+                        {% if ticket.status == 'باز' %}status-open
+                        {% elif ticket.status == 'در حال بررسی' %}status-inprogress
+                        {% else %}status-closed{% endif %}">
+                        {{ ticket.status }}
+                    </span>
+
+                    <div class="d-flex">
+                        {% if ticket.status == 'بسته' %}
+                            <form method="POST" action="{{ url_for('reopen_ticket', ticket_id=ticket.id) }}">
+                                <button type="submit" class="btn btn-success btn-sm">
+                                    <i class="bi bi-arrow-clockwise me-1"></i>
+                                    بازگشایی مجدد
+                                </button>
+                            </form>
+                        {% else %}
+                            <form method="POST" action="{{ url_for('close_ticket', ticket_id=ticket.id) }}">
+                                <button type="submit" class="btn btn-danger btn-sm">
+                                    <i class="bi bi-x-circle me-1"></i>
+                                    بستن تیکت
+                                </button>
+                            </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <a href="{{ url_for('tickets_list') }}" class="btn btn-outline-primary btn-sm mb-4">
+                <i class="bi bi-arrow-right me-1"></i>
+                بازگشت به لیست تیکت‌ها
+            </a>
+
+            <!-- نمایش فایل‌های پیوست تیکت -->
+            {% if ticket.attachments|selectattr('message_id', 'none')|list %}
+            <div class="attachments-section">
+                <div class="attachments-title">
+                    <i class="bi bi-paperclip me-1"></i>
+                    فایل‌های پیوست تیکت
+                </div>
+                {% for attachment in ticket.attachments %}
+                {% if attachment.message_id is none %}
+                <div class="attachment-item">
+                    {% if attachment.file_type == 'image' %}
+                    <i class="bi bi-file-image attachment-icon"></i>
+                    {% else %}
+                    <i class="bi bi-file-earmark attachment-icon"></i>
+                    {% endif %}
+                    <div class="attachment-info">
+                        <div class="attachment-filename">{{ attachment.filename }}</div>
+                        <div class="attachment-details">
+                            {{ (attachment.file_size / 1024)|round(1) }} KB | {{ attachment.upload_date.strftime('%Y/%m/%d %H:%M') }}
+                        </div>
+                    </div>
+                    <div class="attachment-actions">
+                        <a href="{{ url_for('view_attachment', attachment_id=attachment.id) }}" target="_blank" class="btn btn-sm btn-info attachment-action-btn">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                        <!-- دکمه حذف (فقط برای فرستنده تیکت) -->
+                        {% if ticket.user_id == user.id and ticket.status != 'بسته' %}
+                        <button type="button" class="btn btn-sm btn-danger attachment-action-btn"
+                                onclick="deleteAttachment({{ attachment.id }})">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- لیست پیام‌ها -->
+            <h5 class="mb-3">پیام‌ها</h5>
+            <div class="message-list">
+                {% for message in messages %}
+                    <div class="message-bubble {% if message.is_admin %}message-admin{% else %}message-user{% endif %}" id="message-{{ message.id }}">
+                        <!-- دکمه‌های اقدام پیام (فقط برای نویسنده پیام) -->
+                        {% if message.user_id == user.id and ticket.status != 'بسته' %}
+                        <div class="message-actions">
+                            <button type="button" class="btn btn-primary edit-btn" onclick="editMessage({{ message.id }})">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                        </div>
+                        {% endif %}
+
+                        <div class="message-header">
+                            <span class="message-sender">
+                                {% if message.is_admin %}
+                                    <i class="bi bi-shield-check me-1"></i>
+                                    {{ message.author.username }}
+                                {% else %}
+                                    <i class="bi bi-person-circle me-1"></i>
+                                    {{ message.author.username }}
+                                {% endif %}
+                            </span>
+                            <span class="message-time">
+                                {{ message.created_at.strftime('%Y/%m/%d %H:%M') }}
+                                {% if message.edited %}
+                                <span class="edited-indicator">(ویرایش شده {{ message.edited_at.strftime('%Y/%m/%d %H:%M') }})</span>
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div class="message-content">{{ message.message }}</div>
+
+                        <!-- نمایش فایل‌های پیوست پیام -->
+                        {% if message.attachments %}
+                        <div class="attachments-section mt-3">
+                            <div class="attachments-title">
+                                <i class="bi bi-paperclip me-1"></i>
+                                فایل‌های پیوست
+                            </div>
+                            {% for attachment in message.attachments %}
+                            <div class="attachment-item">
+                                {% if attachment.file_type == 'image' %}
+                                <i class="bi bi-file-image attachment-icon"></i>
+                                {% else %}
+                                <i class="bi bi-file-earmark attachment-icon"></i>
+                                {% endif %}
+                                <div class="attachment-info">
+                                    <div class="attachment-filename">{{ attachment.filename }}</div>
+                                    <div class="attachment-details">
+                                        {{ (attachment.file_size / 1024)|round(1) }} KB | {{ attachment.upload_date.strftime('%Y/%m/%d %H:%M') }}
+                                    </div>
+                                </div>
+                                <div class="attachment-actions">
+                                    <a href="{{ url_for('view_attachment', attachment_id=attachment.id) }}" target="_blank" class="btn btn-sm btn-info attachment-action-btn">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <!-- دکمه حذف (فقط برای نویسنده پیام) -->
+                                    {% if message.user_id == user.id and ticket.status != 'بسته' %}
+                                    <button type="button" class="btn btn-sm btn-danger attachment-action-btn"
+                                            onclick="deleteAttachment({{ attachment.id }})">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+
+            <!-- فرم پاسخ -->
+            {% if ticket.status == 'بسته' %}
+                <div class="ticket-closed-message">
+                    <i class="bi bi-lock-fill me-1"></i>
+                    این تیکت بسته شده است. برای ارسال پیام جدید، ابتدا تیکت را بازگشایی کنید.
+                </div>
+            {% elif not is_recipient %}
+                <div class="ticket-waiting-message">
+                    <i class="bi bi-hourglass-split me-1"></i>
+                    شما نمی‌توانید به تیکت خود پاسخ دهید. لطفاً منتظر پاسخ {{ other_user.username }} باشید.
+                </div>
+            {% else %}
+                <form id="replyForm" method="POST" action="{{ url_for('view_ticket', ticket_id=ticket.id) }}" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="message" class="form-label">پاسخ شما</label>
+                        <textarea class="form-control" id="message" name="message" rows="4" required
+                                 placeholder="پیام خود را بنویسید..."></textarea>
+                    </div>
+
+                    <!-- بخش آپلود فایل -->
+                    <div class="file-upload-section mb-4">
+                        <label for="file" class="form-label d-flex align-items-center">
+                            <i class="bi bi-paperclip file-type-icon"></i>
+                            پیوست فایل (اختیاری)
+                        </label>
+                        <input type="file" class="form-control" id="file" name="file">
+                        <div class="form-text mt-2">
+                            <i class="bi bi-info-circle me-1"></i>
+                            فرمت‌های مجاز: JPG, PNG, GIF, PDF, DOC, DOCX, XLS, XLSX, TXT (حداکثر 5MB)
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end">
+                        <button type="submit" class="btn btn-primary send-btn">
+                            <i class="bi bi-send me-1"></i>
+                            ارسال پاسخ
+                        </button>
+                    </div>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- مودال ویرایش پیام -->
+<div class="modal fade" id="editMessageModal" tabindex="-1" aria-labelledby="editMessageModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editMessageModalLabel">ویرایش پیام</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editMessageForm">
+                    <input type="hidden" id="edit_message_id">
+                    <div class="mb-3">
+                        <label for="edit_message_text" class="form-label">متن پیام</label>
+                        <textarea class="form-control" id="edit_message_text" rows="5" required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button>
+                <button type="button" class="btn btn-primary" id="saveMessageBtn">ذخیره تغییرات</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // اسکرول به پایین صفحه پیام‌ها
+        const messageList = document.querySelector('.message-list');
+        if (messageList) {
+            messageList.scrollTop = messageList.scrollHeight;
+        }
+
+        // بررسی آپلود فایل در فرم ارسال پاسخ
+        const replyForm = document.getElementById('replyForm');
+        if (replyForm) {
+            replyForm.addEventListener('submit', function(event) {
+                const fileInput = document.getElementById('file');
+                if (fileInput && fileInput.files.length > 0) {
+                    const file = fileInput.files[0];
+                    // بررسی نوع فایل
+                    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'application/pdf',
+                                          'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                                          'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                                          'text/plain'];
+                    if (!allowedTypes.includes(file.type)) {
+                        event.preventDefault();
+                        alert('نوع فایل مجاز نیست. فرمت‌های مجاز: JPG, PNG, GIF, PDF, DOC, DOCX, XLS, XLSX, TXT');
+                        return;
+                    }
+
+                    // بررسی اندازه فایل (حداکثر 5 مگابایت)
+                    if (file.size > 5 * 1024 * 1024) {
+                        event.preventDefault();
+                        alert('حجم فایل نباید بیشتر از 5 مگابایت باشد');
+                        return;
+                    }
+                }
+            });
+        }
+
+        // تنظیم رویداد برای دکمه ذخیره تغییرات در مودال ویرایش پیام
+        const saveMessageBtn = document.getElementById('saveMessageBtn');
+        if (saveMessageBtn) {
+            saveMessageBtn.addEventListener('click', function() {
+                saveMessageChanges();
+            });
+        }
+    });
+
+    // تابع ویرایش پیام
+    function editMessage(messageId) {
+        // دریافت متن فعلی پیام
+        const messageElement = document.getElementById(`message-${messageId}`);
+        const messageContent = messageElement.querySelector('.message-content').innerText;
+
+        // پر کردن فرم مودال
+        document.getElementById('edit_message_id').value = messageId;
+        document.getElementById('edit_message_text').value = messageContent;
+
+        // نمایش مودال
+        const editModal = new bootstrap.Modal(document.getElementById('editMessageModal'));
+        editModal.show();
+    }
+
+    // تابع ذخیره تغییرات پیام
+    function saveMessageChanges() {
+        const messageId = document.getElementById('edit_message_id').value;
+        const newText = document.getElementById('edit_message_text').value.trim();
+
+        if (!newText) {
+            alert('متن پیام نمی‌تواند خالی باشد');
+            return;
+        }
+
+        // ارسال درخواست به سرور
+        fetch(`/tickets/message/${messageId}/edit`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                message: newText
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(data => Promise.reject(data.error || 'خطای نامشخص'));
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                // به‌روزرسانی متن پیام در صفحه
+                const messageElement = document.getElementById(`message-${messageId}`);
+                messageElement.querySelector('.message-content').innerText = data.new_text;
+
+                // افزودن نشانگر ویرایش شده اگر وجود ندارد
+                const messageHeader = messageElement.querySelector('.message-time');
+                if (!messageHeader.querySelector('.edited-indicator')) {
+                    const now = new Date();
+                    const formattedDate = now.toLocaleDateString('fa-IR') + ' ' +
+                                         now.getHours().toString().padStart(2, '0') + ':' +
+                                         now.getMinutes().toString().padStart(2, '0');
+
+                    const editedIndicator = document.createElement('span');
+                    editedIndicator.className = 'edited-indicator';
+                    editedIndicator.innerText = `(ویرایش شده ${formattedDate})`;
+                    messageHeader.appendChild(editedIndicator);
+                }
+
+                // بستن مودال
+                bootstrap.Modal.getInstance(document.getElementById('editMessageModal')).hide();
+            } else {
+                alert(data.error || 'خطا در ویرایش پیام');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('خطا در ویرایش پیام: ' + error);
+        });
+    }
+
+    // تابع حذف فایل پیوست
+    function deleteAttachment(attachmentId) {
+        if (confirm('آیا از حذف این فایل اطمینان دارید؟')) {
+            fetch(`/tickets/attachment/${attachmentId}/delete`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(data => Promise.reject(data.error || 'خطای نامشخص'));
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    // حذف عنصر فایل از DOM
+                    const attachmentElements = document.querySelectorAll(`.attachment-item`);
+                    attachmentElements.forEach(element => {
+                        if (element.querySelector(`.attachment-action-btn[onclick="deleteAttachment(${attachmentId})"]`)) {
+                            element.remove();
+                        }
+                    });
+
+                    alert('فایل با موفقیت حذف شد');
+                } else {
+                    alert(data.error || 'خطا در حذف فایل');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('خطا در حذف فایل: ' + error);
+            });
+        }
+    }
+</script>
+{% endblock %}
